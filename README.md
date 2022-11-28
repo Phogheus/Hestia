@@ -1,1 +1,4 @@
 # Hestia
+> "In Ancient Greek religion and mythology, Hestia is the virgin goddess of the hearth, the right ordering of domesticity, the family, the home, and the state." - [Hestia - Wikipedia](https://en.wikipedia.org/wiki/Hestia)
+
+During my time as a software developer, I've written a lot of interesting pieces of code that solve very broad or very specific problems. I've also semi-recently gotten into home automation/management type software, and containerization of such in particular. With that I present: Hestia; a collection of (probably) random utilities, libraries, and other things that might be useful in my own home projects and hopefully helpful to someone else out there too!
