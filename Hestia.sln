@@ -5,7 +5,7 @@ VisualStudioVersion = 17.4.33103.184
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hestia.Base", "Hestia.Base\Hestia.Base.csproj", "{7426C185-CC5B-47B9-B5ED-06B56ACDAC48}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hestia.Base.Tests", "Hestia.Base.Tests\Hestia.Base.Tests.csproj", "{966E443B-2FAF-4D67-ADD5-7C4132F3FDD3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hestia.Base.Tests", "Hestia.Base.Tests\Hestia.Base.Tests.csproj", "{966E443B-2FAF-4D67-ADD5-7C4132F3FDD3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
