@@ -35,6 +35,9 @@ namespace Hestia.Base.Geometry.Models
         [JsonIgnore]
         public Point2D MidPoint { get; }
 
+        [JsonIgnore]
+        public double Length { get; }
+
         /// <summary>
         /// Slope of the line
         /// </summary>
@@ -68,6 +71,7 @@ namespace Hestia.Base.Geometry.Models
 
             // Other derived values
             MidPoint = new Point2D((Start.X + End.X) / 2f, (Start.Y + End.Y) / 2f);
+            Length = Start.Distance(End);
             Slope = (End.Y - Start.Y) / (End.X - Start.X);
             Intercept = Start.Y - (Slope * Start.X);
         }

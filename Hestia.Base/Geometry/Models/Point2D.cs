@@ -14,12 +14,16 @@ namespace Hestia.Base.Geometry.Models
         [JsonIgnore]
         public double Magnitude { get; }
 
+        [JsonIgnore]
+        public double MagnitudeSquared { get; }
+
         [JsonConstructor]
         public Point2D(double x, double y)
         {
             X = x;
             Y = y;
-            Magnitude = Math.Sqrt((X * X) + (Y * Y));
+            MagnitudeSquared = (X * X) + (Y * Y);
+            Magnitude = Math.Sqrt(MagnitudeSquared);
         }
 
         public double AngleBetweenPointsInRadians(Point2D point)
@@ -51,6 +55,16 @@ namespace Hestia.Base.Geometry.Models
             var deltaY = point.Y - Y;
 
             return Math.Sqrt((deltaX * deltaX) + (deltaY * deltaY));
+        }
+
+        public bool ApproximatelyEquals(Point2D other, double approximationThreshold)
+        {
+            var deltaX = Math.Abs(X - other.X);
+            var deltaY = Math.Abs(Y - other.Y);
+
+            approximationThreshold = Math.Max(0, approximationThreshold);
+
+            return deltaX <= approximationThreshold && deltaY <= approximationThreshold;
         }
 
         public bool Equals(Point2D other)
