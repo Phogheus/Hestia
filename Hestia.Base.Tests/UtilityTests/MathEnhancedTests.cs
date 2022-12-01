@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Security.Cryptography;
 using Hestia.Base.Utilities;
 using NUnit.Framework;
 
@@ -7,6 +6,9 @@ namespace Hestia.Base.Tests.UtilityTests
 {
     public class MathEnhancedTests
     {
+        private const string DATE_TIME_FORMAT = "dd/MM/yyyy HH:mm:ss";
+        private const string TIME_FORMAT = "dd\\.hh\\:mm\\:ss";
+
         [Test]
         public void ClampTests()
         {
@@ -46,145 +48,101 @@ namespace Hestia.Base.Tests.UtilityTests
         [Test]
         public void LerpTests()
         {
-            const double COMPLETION_STEP_START = 0d;
-            const double COMPLETION_STEP_START_TO_MIDDLE = .193d;
-            const double COMPLETION_STEP_MIDDLE = .5d;
-            const double COMPLETION_STEP_MIDDLE_TO_END = .725d;
-            const double COMPLETION_STEP_END = 1d;
-
-            (int Min, int Max) bounds;
+            const float COMPLETION_STEP_START = 0f;
+            const float COMPLETION_STEP_MIDDLE = .5f;
+            const float COMPLETION_STEP_END = 1f;
 
             for (var i = 0; i < 13; i++)
             {
                 switch (i)
                 {
                     case 0: // byte
-                        bounds = GetRandomRange(0, byte.MaxValue);
-                        Assert.That(MathEnhanced.Lerp((byte)bounds.Min, (byte)bounds.Max, COMPLETION_STEP_START), Is.EqualTo(bounds.Min));
-                        Assert.That(MathEnhanced.Lerp((byte)bounds.Min, (byte)bounds.Max, COMPLETION_STEP_START_TO_MIDDLE), Is.EqualTo((byte)GetRoundedLerpValue(bounds.Min, bounds.Max, COMPLETION_STEP_START_TO_MIDDLE)));
-                        Assert.That(MathEnhanced.Lerp((byte)bounds.Min, (byte)bounds.Max, COMPLETION_STEP_MIDDLE), Is.EqualTo((byte)GetRoundedLerpValue(bounds.Min, bounds.Max, COMPLETION_STEP_MIDDLE)));
-                        Assert.That(MathEnhanced.Lerp((byte)bounds.Min, (byte)bounds.Max, COMPLETION_STEP_MIDDLE_TO_END), Is.EqualTo((byte)GetRoundedLerpValue(bounds.Min, bounds.Max, COMPLETION_STEP_MIDDLE_TO_END)));
-                        Assert.That(MathEnhanced.Lerp((byte)bounds.Min, (byte)bounds.Max, COMPLETION_STEP_END), Is.EqualTo(bounds.Max));
+                        Assert.That(MathEnhanced.Lerp((byte)0, (byte)100, COMPLETION_STEP_START), Is.EqualTo(0));
+                        Assert.That(MathEnhanced.Lerp((byte)0, (byte)100, COMPLETION_STEP_MIDDLE), Is.EqualTo(50));
+                        Assert.That(MathEnhanced.Lerp((byte)0, (byte)100, COMPLETION_STEP_END), Is.EqualTo(100));
                         break;
 
                     case 1: // sbyte
-                        bounds = GetRandomRange(sbyte.MinValue, sbyte.MaxValue);
-                        Assert.That(MathEnhanced.Lerp((sbyte)bounds.Min, (sbyte)bounds.Max, COMPLETION_STEP_START), Is.EqualTo(bounds.Min));
-                        Assert.That(MathEnhanced.Lerp((sbyte)bounds.Min, (sbyte)bounds.Max, COMPLETION_STEP_START_TO_MIDDLE), Is.EqualTo((sbyte)GetRoundedLerpValue(bounds.Min, bounds.Max, COMPLETION_STEP_START_TO_MIDDLE)));
-                        Assert.That(MathEnhanced.Lerp((sbyte)bounds.Min, (sbyte)bounds.Max, COMPLETION_STEP_MIDDLE), Is.EqualTo((sbyte)GetRoundedLerpValue(bounds.Min, bounds.Max, COMPLETION_STEP_MIDDLE)));
-                        Assert.That(MathEnhanced.Lerp((sbyte)bounds.Min, (sbyte)bounds.Max, COMPLETION_STEP_MIDDLE_TO_END), Is.EqualTo((sbyte)GetRoundedLerpValue(bounds.Min, bounds.Max, COMPLETION_STEP_MIDDLE_TO_END)));
-                        Assert.That(MathEnhanced.Lerp((sbyte)bounds.Min, (sbyte)bounds.Max, COMPLETION_STEP_END), Is.EqualTo(bounds.Max));
+                        Assert.That(MathEnhanced.Lerp((sbyte)0, (sbyte)100, COMPLETION_STEP_START), Is.EqualTo(0));
+                        Assert.That(MathEnhanced.Lerp((sbyte)0, (sbyte)100, COMPLETION_STEP_MIDDLE), Is.EqualTo(50));
+                        Assert.That(MathEnhanced.Lerp((sbyte)0, (sbyte)100, COMPLETION_STEP_END), Is.EqualTo(100));
                         break;
 
                     case 2: // short
-                        bounds = GetRandomRange(short.MinValue, short.MaxValue);
-                        Assert.That(MathEnhanced.Lerp((short)bounds.Min, (short)bounds.Max, COMPLETION_STEP_START), Is.EqualTo(bounds.Min));
-                        Assert.That(MathEnhanced.Lerp((short)bounds.Min, (short)bounds.Max, COMPLETION_STEP_START_TO_MIDDLE), Is.EqualTo((short)GetRoundedLerpValue(bounds.Min, bounds.Max, COMPLETION_STEP_START_TO_MIDDLE)));
-                        Assert.That(MathEnhanced.Lerp((short)bounds.Min, (short)bounds.Max, COMPLETION_STEP_MIDDLE), Is.EqualTo((short)GetRoundedLerpValue(bounds.Min, bounds.Max, COMPLETION_STEP_MIDDLE)));
-                        Assert.That(MathEnhanced.Lerp((short)bounds.Min, (short)bounds.Max, COMPLETION_STEP_MIDDLE_TO_END), Is.EqualTo((short)GetRoundedLerpValue(bounds.Min, bounds.Max, COMPLETION_STEP_MIDDLE_TO_END)));
-                        Assert.That(MathEnhanced.Lerp((short)bounds.Min, (short)bounds.Max, COMPLETION_STEP_END), Is.EqualTo(bounds.Max));
+                        Assert.That(MathEnhanced.Lerp((short)0, (short)100, COMPLETION_STEP_START), Is.EqualTo(0));
+                        Assert.That(MathEnhanced.Lerp((short)0, (short)100, COMPLETION_STEP_MIDDLE), Is.EqualTo(50));
+                        Assert.That(MathEnhanced.Lerp((short)0, (short)100, COMPLETION_STEP_END), Is.EqualTo(100));
                         break;
 
                     case 3: // ushort
-                        bounds = GetRandomRange(0, ushort.MaxValue);
-                        Assert.That(MathEnhanced.Lerp((ushort)bounds.Min, (ushort)bounds.Max, COMPLETION_STEP_START), Is.EqualTo(bounds.Min));
-                        Assert.That(MathEnhanced.Lerp((ushort)bounds.Min, (ushort)bounds.Max, COMPLETION_STEP_START_TO_MIDDLE), Is.EqualTo((ushort)GetRoundedLerpValue(bounds.Min, bounds.Max, COMPLETION_STEP_START_TO_MIDDLE)));
-                        Assert.That(MathEnhanced.Lerp((ushort)bounds.Min, (ushort)bounds.Max, COMPLETION_STEP_MIDDLE), Is.EqualTo((ushort)GetRoundedLerpValue(bounds.Min, bounds.Max, COMPLETION_STEP_MIDDLE)));
-                        Assert.That(MathEnhanced.Lerp((ushort)bounds.Min, (ushort)bounds.Max, COMPLETION_STEP_MIDDLE_TO_END), Is.EqualTo((ushort)GetRoundedLerpValue(bounds.Min, bounds.Max, COMPLETION_STEP_MIDDLE_TO_END)));
-                        Assert.That(MathEnhanced.Lerp((ushort)bounds.Min, (ushort)bounds.Max, COMPLETION_STEP_END), Is.EqualTo(bounds.Max));
+                        Assert.That(MathEnhanced.Lerp((ushort)0, (ushort)100, COMPLETION_STEP_START), Is.EqualTo(0));
+                        Assert.That(MathEnhanced.Lerp((ushort)0, (ushort)100, COMPLETION_STEP_MIDDLE), Is.EqualTo(50));
+                        Assert.That(MathEnhanced.Lerp((ushort)0, (ushort)100, COMPLETION_STEP_END), Is.EqualTo(100));
                         break;
 
                     case 4: // int
-                        bounds = GetRandomRange(int.MinValue, int.MaxValue);
-                        Assert.That(MathEnhanced.Lerp(bounds.Min, bounds.Max, COMPLETION_STEP_START), Is.EqualTo(bounds.Min));
-                        Assert.That(MathEnhanced.Lerp(bounds.Min, bounds.Max, COMPLETION_STEP_START_TO_MIDDLE), Is.EqualTo((int)GetRoundedLerpValue(bounds.Min, bounds.Max, COMPLETION_STEP_START_TO_MIDDLE)));
-                        Assert.That(MathEnhanced.Lerp(bounds.Min, bounds.Max, COMPLETION_STEP_MIDDLE), Is.EqualTo((int)GetRoundedLerpValue(bounds.Min, bounds.Max, COMPLETION_STEP_MIDDLE)));
-                        Assert.That(MathEnhanced.Lerp(bounds.Min, bounds.Max, COMPLETION_STEP_MIDDLE_TO_END), Is.EqualTo((int)GetRoundedLerpValue(bounds.Min, bounds.Max, COMPLETION_STEP_MIDDLE_TO_END)));
-                        Assert.That(MathEnhanced.Lerp(bounds.Min, bounds.Max, COMPLETION_STEP_END), Is.EqualTo(bounds.Max));
+                        Assert.That(MathEnhanced.Lerp(0, 100, COMPLETION_STEP_START), Is.EqualTo(0));
+                        Assert.That(MathEnhanced.Lerp(0, 100, COMPLETION_STEP_MIDDLE), Is.EqualTo(50));
+                        Assert.That(MathEnhanced.Lerp(0, 100, COMPLETION_STEP_END), Is.EqualTo(100));
                         break;
 
                     case 5: // uint
-                        bounds = GetRandomRange(0, int.MaxValue);
-                        Assert.That(MathEnhanced.Lerp((uint)bounds.Min, (uint)bounds.Max, COMPLETION_STEP_START), Is.EqualTo(bounds.Min));
-                        Assert.That(MathEnhanced.Lerp((uint)bounds.Min, (uint)bounds.Max, COMPLETION_STEP_START_TO_MIDDLE), Is.EqualTo((uint)GetRoundedLerpValue(bounds.Min, bounds.Max, COMPLETION_STEP_START_TO_MIDDLE)));
-                        Assert.That(MathEnhanced.Lerp((uint)bounds.Min, (uint)bounds.Max, COMPLETION_STEP_MIDDLE), Is.EqualTo((uint)GetRoundedLerpValue(bounds.Min, bounds.Max, COMPLETION_STEP_MIDDLE)));
-                        Assert.That(MathEnhanced.Lerp((uint)bounds.Min, (uint)bounds.Max, COMPLETION_STEP_MIDDLE_TO_END), Is.EqualTo((uint)GetRoundedLerpValue(bounds.Min, bounds.Max, COMPLETION_STEP_MIDDLE_TO_END)));
-                        Assert.That(MathEnhanced.Lerp((uint)bounds.Min, (uint)bounds.Max, COMPLETION_STEP_END), Is.EqualTo(bounds.Max));
+                        Assert.That(MathEnhanced.Lerp(0U, 100, COMPLETION_STEP_START), Is.EqualTo(0));
+                        Assert.That(MathEnhanced.Lerp(0U, 100, COMPLETION_STEP_MIDDLE), Is.EqualTo(50));
+                        Assert.That(MathEnhanced.Lerp(0U, 100, COMPLETION_STEP_END), Is.EqualTo(100));
                         break;
 
                     case 6: // long
-                        bounds = GetRandomRange(int.MinValue, int.MaxValue);
-                        Assert.That(MathEnhanced.Lerp((long)bounds.Min, bounds.Max, COMPLETION_STEP_START), Is.EqualTo(bounds.Min));
-                        Assert.That(MathEnhanced.Lerp((long)bounds.Min, bounds.Max, COMPLETION_STEP_START_TO_MIDDLE), Is.EqualTo((long)GetRoundedLerpValue(bounds.Min, bounds.Max, COMPLETION_STEP_START_TO_MIDDLE)));
-                        Assert.That(MathEnhanced.Lerp((long)bounds.Min, bounds.Max, COMPLETION_STEP_MIDDLE), Is.EqualTo((long)GetRoundedLerpValue(bounds.Min, bounds.Max, COMPLETION_STEP_MIDDLE)));
-                        Assert.That(MathEnhanced.Lerp((long)bounds.Min, bounds.Max, COMPLETION_STEP_MIDDLE_TO_END), Is.EqualTo((long)GetRoundedLerpValue(bounds.Min, bounds.Max, COMPLETION_STEP_MIDDLE_TO_END)));
-                        Assert.That(MathEnhanced.Lerp((long)bounds.Min, bounds.Max, COMPLETION_STEP_END), Is.EqualTo(bounds.Max));
+                        Assert.That(MathEnhanced.Lerp(0L, 100, COMPLETION_STEP_START), Is.EqualTo(0));
+                        Assert.That(MathEnhanced.Lerp(0L, 100, COMPLETION_STEP_MIDDLE), Is.EqualTo(50));
+                        Assert.That(MathEnhanced.Lerp(0L, 100, COMPLETION_STEP_END), Is.EqualTo(100));
                         break;
 
                     case 7: // ulong
-                        bounds = GetRandomRange(0, int.MaxValue);
-                        Assert.That(MathEnhanced.Lerp((ulong)bounds.Min, (ulong)bounds.Max, COMPLETION_STEP_START), Is.EqualTo(bounds.Min));
-                        Assert.That(MathEnhanced.Lerp((ulong)bounds.Min, (ulong)bounds.Max, COMPLETION_STEP_START_TO_MIDDLE), Is.EqualTo((ulong)GetRoundedLerpValue(bounds.Min, bounds.Max, COMPLETION_STEP_START_TO_MIDDLE)));
-                        Assert.That(MathEnhanced.Lerp((ulong)bounds.Min, (ulong)bounds.Max, COMPLETION_STEP_MIDDLE), Is.EqualTo((ulong)GetRoundedLerpValue(bounds.Min, bounds.Max, COMPLETION_STEP_MIDDLE)));
-                        Assert.That(MathEnhanced.Lerp((ulong)bounds.Min, (ulong)bounds.Max, COMPLETION_STEP_MIDDLE_TO_END), Is.EqualTo((ulong)GetRoundedLerpValue(bounds.Min, bounds.Max, COMPLETION_STEP_MIDDLE_TO_END)));
-                        Assert.That(MathEnhanced.Lerp((ulong)bounds.Min, (ulong)bounds.Max, COMPLETION_STEP_END), Is.EqualTo(bounds.Max));
+                        Assert.That(MathEnhanced.Lerp(0UL, 100, COMPLETION_STEP_START), Is.EqualTo(0));
+                        Assert.That(MathEnhanced.Lerp(0UL, 100, COMPLETION_STEP_MIDDLE), Is.EqualTo(50));
+                        Assert.That(MathEnhanced.Lerp(0UL, 100, COMPLETION_STEP_END), Is.EqualTo(100));
                         break;
 
                     case 8: // float
+                        Assert.That(MathEnhanced.Lerp(0f, 100, COMPLETION_STEP_START), Is.EqualTo(0f));
+                        Assert.That(MathEnhanced.Lerp(0f, 100, COMPLETION_STEP_MIDDLE), Is.EqualTo(50f));
+                        Assert.That(MathEnhanced.Lerp(0f, 100, COMPLETION_STEP_END), Is.EqualTo(100f));
                         break;
 
                     case 9: // double
+                        Assert.That(MathEnhanced.Lerp(0d, 100, COMPLETION_STEP_START), Is.EqualTo(0d));
+                        Assert.That(MathEnhanced.Lerp(0d, 100, COMPLETION_STEP_MIDDLE), Is.EqualTo(50d));
+                        Assert.That(MathEnhanced.Lerp(0d, 100, COMPLETION_STEP_END), Is.EqualTo(100d));
                         break;
 
                     case 10: // decimal
+                        Assert.That(MathEnhanced.Lerp(0.00m, 100.00m, COMPLETION_STEP_START), Is.EqualTo(0.00m));
+                        Assert.That(MathEnhanced.Lerp(0.00m, 100.00m, COMPLETION_STEP_MIDDLE), Is.EqualTo(50.00m));
+                        Assert.That(MathEnhanced.Lerp(0.00m, 100.00m, COMPLETION_STEP_END), Is.EqualTo(100.00m));
                         break;
 
                     case 11: // DateTime
+                        var startDateTime = DateTime.Now.Date;
+                        var middleDateTime = startDateTime.AddHours(12);
+                        var endDateTime = startDateTime.AddDays(1);
+                        Assert.That(MathEnhanced.Lerp(startDateTime, endDateTime, COMPLETION_STEP_START), Is.EqualTo(startDateTime));
+                        // We could see variance in ms, so only compare Date and HH:mm:ss
+                        Assert.That(MathEnhanced.Lerp(startDateTime, endDateTime, COMPLETION_STEP_MIDDLE).ToString(DATE_TIME_FORMAT), Is.EqualTo(middleDateTime.ToString(DATE_TIME_FORMAT)));
+                        Assert.That(MathEnhanced.Lerp(startDateTime, endDateTime, COMPLETION_STEP_END), Is.EqualTo(endDateTime));
                         break;
 
                     case 12: // TimeSpan
+                        var startTime = TimeSpan.MinValue;
+                        var middleTime = startTime.Add(TimeSpan.FromHours(12));
+                        var endTime = startTime.Add(TimeSpan.FromHours(24));
+                        Assert.That(MathEnhanced.Lerp(startTime, endTime, COMPLETION_STEP_START), Is.EqualTo(startTime));
+                        // We could see variance in ms, so only compare days and hh:mm:ss
+                        Assert.That(MathEnhanced.Lerp(startTime, endTime, COMPLETION_STEP_MIDDLE).ToString(TIME_FORMAT), Is.EqualTo(middleTime.ToString(TIME_FORMAT)));
+                        Assert.That(MathEnhanced.Lerp(startTime, endTime, COMPLETION_STEP_END), Is.EqualTo(endTime));
                         break;
                 }
             }
-        }
-
-        [Test]
-        public void WrapTests()
-        {
-            var range = GetRandomRange(1, 100);
-
-            var rng = RandomNumberGenerator.Create();
-            var rngBuffer = new byte[sizeof(short)];
-
-            for (var i = 0; i < 1000; i++)
-            {
-                rng.GetBytes(rngBuffer);
-                var randVal = BitConverter.ToInt16(rngBuffer);
-
-                var wrappedValue = MathEnhanced.Wrap(randVal, range.Min, range.Max);
-                Assert.That(wrappedValue, Is.GreaterThanOrEqualTo(range.Min));
-                Assert.That(wrappedValue, Is.LessThanOrEqualTo(range.Max));
-            }
-        }
-
-        [Test]
-        public void RandomNextTests()
-        {
-        }
-
-        private static (int Min, int Max) GetRandomRange(int minValue, int maxValue)
-        {
-            var bound1 = Random.Shared.Next(minValue, maxValue);
-            var bound2 = Random.Shared.Next(minValue, maxValue);
-
-            return bound1 >= bound2
-                ? (bound2, bound1)
-                : (bound1, bound2);
-        }
-
-        private static double GetRoundedLerpValue(double min, double max, double t)
-        {
-            return Math.Round(min + (max - min) * t, MidpointRounding.ToZero);
         }
     }
 }
