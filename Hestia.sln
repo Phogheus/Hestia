@@ -7,6 +7,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hestia.Base", "Hestia.Base\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hestia.Base.Tests", "Hestia.Base.Tests\Hestia.Base.Tests.csproj", "{966E443B-2FAF-4D67-ADD5-7C4132F3FDD3}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hestia.Web.Examples.gRPC", "Hestia.Web.Examples.gRPC\Hestia.Web.Examples.gRPC.csproj", "{9903BBBE-D16B-4CFB-B2B9-D001E8EA43E1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hestia.Base.gRPC", "Hestia.Base.gRPC\Hestia.Base.gRPC.csproj", "{9A5A62E5-EEE3-4E59-9764-D422AE8C73F2}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hestia.Base.gRPC.Tests", "Hestia.Base.gRPC.Tests\Hestia.Base.gRPC.Tests.csproj", "{72C1015D-54D9-4368-BFB2-CDEF0D61C632}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hestia.Web.Examples.gRPC.Client", "Hestia.Web.Examples.gRPC.Client\Hestia.Web.Examples.gRPC.Client.csproj", "{39CF647E-16D2-48CC-923B-421BC69442A7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +29,22 @@ Global
 		{966E443B-2FAF-4D67-ADD5-7C4132F3FDD3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{966E443B-2FAF-4D67-ADD5-7C4132F3FDD3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{966E443B-2FAF-4D67-ADD5-7C4132F3FDD3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9903BBBE-D16B-4CFB-B2B9-D001E8EA43E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9903BBBE-D16B-4CFB-B2B9-D001E8EA43E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9903BBBE-D16B-4CFB-B2B9-D001E8EA43E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9903BBBE-D16B-4CFB-B2B9-D001E8EA43E1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A5A62E5-EEE3-4E59-9764-D422AE8C73F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A5A62E5-EEE3-4E59-9764-D422AE8C73F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A5A62E5-EEE3-4E59-9764-D422AE8C73F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A5A62E5-EEE3-4E59-9764-D422AE8C73F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{72C1015D-54D9-4368-BFB2-CDEF0D61C632}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{72C1015D-54D9-4368-BFB2-CDEF0D61C632}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{72C1015D-54D9-4368-BFB2-CDEF0D61C632}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{72C1015D-54D9-4368-BFB2-CDEF0D61C632}.Release|Any CPU.Build.0 = Release|Any CPU
+		{39CF647E-16D2-48CC-923B-421BC69442A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{39CF647E-16D2-48CC-923B-421BC69442A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{39CF647E-16D2-48CC-923B-421BC69442A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{39CF647E-16D2-48CC-923B-421BC69442A7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
