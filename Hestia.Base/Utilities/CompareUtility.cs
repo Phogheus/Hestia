@@ -45,7 +45,7 @@ namespace Hestia.Base.Utilities
             {
                 var objectType = left!.GetType();
 
-                // If T implements IEquatable, prefer that Equals method over object
+                // If T implements IEquatable, prefer IEquatable.Equals over object.Equals
                 if (objectType.IsAssignableTo(typeof(IEquatable<T>)))
                 {
                     return ((IEquatable<T>)left!).Equals(right);
@@ -66,11 +66,11 @@ namespace Hestia.Base.Utilities
         }
 
         /// <summary>
-        /// Returns true if both <paramref name="left"/> and <paramref name="right"/> are considered equal 
+        /// Returns true if both <paramref name="left"/> and <paramref name="right"/> appear to be equal
         /// </summary>
         /// <param name="left">Value to compare against <paramref name="right"/></param>
         /// <param name="right">Value to compare against <paramref name="left"/></param>
-        /// <returns>True if both <paramref name="left"/> and <paramref name="right"/> are considered equal</returns>
+        /// <returns>True if both <paramref name="left"/> and <paramref name="right"/> appear to be equal</returns>
         public static bool EnumerablesAreEqual(IEnumerable? left, IEnumerable? right)
         {
             if (left is null && right is null)

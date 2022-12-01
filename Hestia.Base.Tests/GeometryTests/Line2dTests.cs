@@ -3,14 +3,81 @@ using System.Text.Json;
 using Hestia.Base.Geometry.Models;
 using NUnit.Framework;
 
+// TODO: GetOrientationOfPoint
+
 namespace Hestia.Base.Tests.GeometryTests
 {
     public class Line2dTests
     {
         [Test]
+        public void ConstructorTests()
+        {
+            Assert.DoesNotThrow(() => new Line2D());
+            _ = Assert.Throws<InvalidOperationException>(() => new Line2D(Point2D.Zero, Point2D.Zero));
+            Assert.DoesNotThrow(() => new Line2D(Point2D.Zero, new Point2D(0, 1)));
+        }
+
+        [TestCase(-1, 1, true)] // Upper left quadrant
+        [TestCase(0, 1, false)] // Upper center
+        [TestCase(1, 1, false)] // Upper right quadrant
+        [TestCase(1, 0, false)] // Center right
+        [TestCase(1, -1, false)] // Bottom right quadrant
+        [TestCase(0, -1, true)] // Bottom center
+        [TestCase(-1, -1, true)] // Bottom left quadrant
+        [TestCase(-1, 0, true)] // Center left
+        public void ConstructorOrderedPointTests(int targetX, int targetY, bool orderFlipExpectedFirst)
+        {
+            // Assert Start and End points are in correct order of X-Right then Y-Up
+
+            // Test upper left quadrant
+            var start = Point2D.Zero;
+            var end = new Point2D(targetX, targetY);
+            var line = new Line2D(start, end);
+
+            if (orderFlipExpectedFirst)
+            {
+                Assert.Multiple(() =>
+                {
+                    Assert.That(line.Start, Is.EqualTo(end));
+                    Assert.That(line.End, Is.EqualTo(start));
+                });
+            }
+            else
+            {
+                Assert.Multiple(() =>
+                {
+                    Assert.That(line.Start, Is.EqualTo(start));
+                    Assert.That(line.End, Is.EqualTo(end));
+                });
+            }
+
+            // Flip points to confirm the opposite order returns the same results
+            start = end;
+            end = Point2D.Zero;
+            line = new Line2D(start, end);
+
+            if (!orderFlipExpectedFirst)
+            {
+                Assert.Multiple(() =>
+                {
+                    Assert.That(line.Start, Is.EqualTo(end));
+                    Assert.That(line.End, Is.EqualTo(start));
+                });
+            }
+            else
+            {
+                Assert.Multiple(() =>
+                {
+                    Assert.That(line.Start, Is.EqualTo(start));
+                    Assert.That(line.End, Is.EqualTo(end));
+                });
+            }
+        }
+
+        [Test]
         public void EqualityTests()
         {
-            var line1 = GetRandomIntegerLineSegment();
+            var line1 = GeometryTestHelpers.GetRandomIntegerLineSegment();
             var line2 = new Line2D(line1.Start, line1.End);
             var line3 = new Line2D(line1.Start * -1, line1.End);
 
@@ -21,7 +88,7 @@ namespace Hestia.Base.Tests.GeometryTests
         [Test]
         public void SerializationTests()
         {
-            var line = GetRandomIntegerLineSegment();
+            var line = GeometryTestHelpers.GetRandomIntegerLineSegment();
             var serialized = JsonSerializer.Serialize(line);
             var deserialized = JsonSerializer.Deserialize<Line2D>(serialized);
             Assert.That(line, Is.EqualTo(deserialized));
@@ -30,7 +97,7 @@ namespace Hestia.Base.Tests.GeometryTests
         [Test]
         public void IsPointOnLineTests()
         {
-            var line = GetRandomIntegerLineSegment();
+            var line = GeometryTestHelpers.GetRandomIntegerLineSegment();
             var outsidePoint = line.Start + ((line.End - line.Start) * 1000f);
             var minorAdjustment = new Point2D(1f, 0);
 
@@ -50,7 +117,7 @@ namespace Hestia.Base.Tests.GeometryTests
         [Test]
         public void IsPointOnLineSegmentTests()
         {
-            var line = GetRandomIntegerLineSegment();
+            var line = GeometryTestHelpers.GetRandomIntegerLineSegment();
             var outsidePoint = line.Start + ((line.End - line.Start) * 1000f);
             var minorAdjustment = new Point2D(1f, 0);
 
@@ -70,44 +137,55 @@ namespace Hestia.Base.Tests.GeometryTests
         [Test]
         public void DoLinesIntersectTests()
         {
-            var line1 = GetRandomIntegerLineSegment();
-            var line2 = GetRandomIntegerLineSegment();
+            // Parallel
+            var line1 = GeometryTestHelpers.GetRandomIntegerLineSegment();
+            var line2 = new Line2D(line1.Start * 2, line1.End * 2);
+            Assert.That(line1.DoLinesIntersect(line2), Is.False);
 
-            // If slope is equal, they're parallel and won't intersect
-            if (line1.Slope == line2.Slope)
-            {
-                line2 = new Line2D(line2.Start, line2.End * 2);
-            }
+            // Coincident
+            line1 = GeometryTestHelpers.GetRandomIntegerLineSegment();
+            Assert.That(line1.DoLinesIntersect(line1), Is.False);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(line1.DoLinesIntersect(line1), Is.False);
-                Assert.That(line1.DoLinesIntersect(line2), Is.True);
-            });
+            // Perpendicular
+            line1 = GeometryTestHelpers.GetRandomIntegerLineSegment();
+            line2 = new Line2D(new Point2D(line1.Start.X, line1.End.Y), new Point2D(line1.End.X, line1.Start.Y));
+            Assert.That(line1.DoLinesIntersect(line2), Is.True);
+
+            // Lines intersect but do not touch
+            line1 = GeometryTestHelpers.GetRandomIntegerLineSegment();
+            line2 = new Line2D(line1.Start * 2, (line1.End * 2) + new Point2D(0, 10));
+            Assert.That(line1.DoLinesIntersect(line2), Is.True);
         }
 
         [Test]
         public void DoLineSegmentsIntersectTests()
         {
-            var line1 = GetRandomIntegerLineSegment();
-            var line2 = new Line2D(line1.Start, GetRandomIntegerLineSegment().End);
-            var line3 = new Line2D(line1.MidPoint, GetRandomIntegerLineSegment().End);
-            var line4 = new Line2D(line1.End, GetRandomIntegerLineSegment().End);
+            // Parallel
+            var line1 = GeometryTestHelpers.GetRandomIntegerLineSegment();
+            var line2 = new Line2D(line1.Start * 2, line1.End * 2);
+            Assert.That(line1.DoLineSegmentsIntersect(line2), Is.False);
 
-            Assert.Multiple(() =>
-            {
-                Assert.That(line1.DoLineSegmentsIntersect(line1), Is.False);
-                Assert.That(line1.DoLineSegmentsIntersect(line2), Is.True);
-                Assert.That(line1.DoLineSegmentsIntersect(line3), Is.True);
-                Assert.That(line1.DoLineSegmentsIntersect(line4), Is.True);
-            });
+            // Coincident
+            line1 = GeometryTestHelpers.GetRandomIntegerLineSegment();
+            Assert.That(line1.DoLineSegmentsIntersect(line1), Is.False);
+
+            // Perpendicular
+            var bounds = line1.Bounds;
+            line1 = new Line2D(bounds.TopLeft, bounds.BottomRight);
+            line2 = new Line2D(bounds.BottomLeft, bounds.TopRight);
+            Assert.That(line1.DoLineSegmentsIntersect(line2), Is.True);
+
+            // Lines intersect but do not touch
+            line1 = GeometryTestHelpers.GetRandomIntegerLineSegment();
+            line2 = new Line2D(line1.Start * 2, (line1.End * 2) + new Point2D(0, 10));
+            Assert.That(line1.DoLineSegmentsIntersect(line2), Is.False);
         }
 
         [Test]
         public void GetIntersectionPointOfLinesTests()
         {
-            var line1 = GetRandomIntegerLineSegment();
-            var line2 = GetRandomIntegerLineSegment();
+            var line1 = GeometryTestHelpers.GetRandomIntegerLineSegment();
+            var line2 = GeometryTestHelpers.GetRandomIntegerLineSegment();
 
             // If slope is equal, they're parallel and won't intersect
             if (line1.Slope == line2.Slope)
@@ -125,10 +203,10 @@ namespace Hestia.Base.Tests.GeometryTests
         [Test]
         public void GetIntersectionPointOfLineSegments()
         {
-            var line1 = GetRandomIntegerLineSegment();
-            var line2 = new Line2D(line1.Start, GetRandomIntegerLineSegment().End);
-            var line3 = new Line2D(line1.MidPoint, GetRandomIntegerLineSegment().End);
-            var line4 = new Line2D(line1.End, GetRandomIntegerLineSegment().End);
+            var line1 = GeometryTestHelpers.GetRandomIntegerLineSegment();
+            var line2 = new Line2D(line1.Start, GeometryTestHelpers.GetRandomIntegerLineSegment().End);
+            var line3 = new Line2D(line1.MidPoint, GeometryTestHelpers.GetRandomIntegerLineSegment().End);
+            var line4 = new Line2D(line1.End, GeometryTestHelpers.GetRandomIntegerLineSegment().End);
 
             Assert.Multiple(() =>
             {
@@ -137,17 +215,6 @@ namespace Hestia.Base.Tests.GeometryTests
                 Assert.That(line1.GetIntersectionPointOfLineSegments(line3), Is.Not.Null);
                 Assert.That(line1.GetIntersectionPointOfLineSegments(line4), Is.Not.Null);
             });
-        }
-
-        private static Line2D GetRandomIntegerLineSegment()
-        {
-            const int MIN = -100;
-            const int MAX = 101;
-
-            var start = new Point2D(Random.Shared.Next(MIN, MAX), Random.Shared.Next(MIN, MAX));
-            var end = new Point2D(Random.Shared.Next(MIN, MAX), Random.Shared.Next(MIN, MAX));
-
-            return new Line2D(start, end);
         }
     }
 }

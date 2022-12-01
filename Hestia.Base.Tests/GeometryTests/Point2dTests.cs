@@ -1,7 +1,8 @@
-﻿using System;
-using System.Text.Json;
+﻿using System.Text.Json;
 using Hestia.Base.Geometry.Models;
 using NUnit.Framework;
+
+// TODO: Dot, Cross, Distance, DistanceSquared, Normalized, ApproximatelyEquals, and +/-/* operators
 
 namespace Hestia.Base.Tests.GeometryTests
 {
@@ -10,7 +11,7 @@ namespace Hestia.Base.Tests.GeometryTests
         [Test]
         public void EqualityTests()
         {
-            var point1 = GetRandomPoint();
+            var point1 = GeometryTestHelpers.GetRandomIntegerPoint();
             var point2 = new Point2D(point1.X, point1.Y);
             var point3 = new Point2D(-point1.X, point1.Y);
 
@@ -21,15 +22,10 @@ namespace Hestia.Base.Tests.GeometryTests
         [Test]
         public void SerializationTests()
         {
-            var point = GetRandomPoint();
+            var point = GeometryTestHelpers.GetRandomIntegerPoint();
             var serialized = JsonSerializer.Serialize(point);
             var deserialized = JsonSerializer.Deserialize<Point2D>(serialized);
             Assert.That(point, Is.EqualTo(deserialized));
-        }
-
-        private static Point2D GetRandomPoint()
-        {
-            return new Point2D((float)Random.Shared.NextDouble(), (float)Random.Shared.NextDouble());
         }
     }
 }
