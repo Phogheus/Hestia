@@ -4,6 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
@@ -22,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Hestia.Base\Hestia.Base.csproj" />
+    <ProjectReference Include="..\Hestia.Base.ServiceBus\Hestia.Base.ServiceBus.csproj" />
   </ItemGroup>
 
 </Project>
