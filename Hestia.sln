@@ -19,6 +19,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hestia.Base.ServiceBus", "H
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hestia.Base.ServiceBus.Tests", "Hestia.Base.ServiceBus.Tests\Hestia.Base.ServiceBus.Tests.csproj", "{9B8A4EA7-7AB7-4264-BBD9-78879559CE94}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{3018670F-C195-4587-8C60-666AE0AED64B}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
