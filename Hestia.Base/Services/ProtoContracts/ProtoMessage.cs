@@ -2,7 +2,7 @@
 using System.Text.Json;
 using ProtoBuf;
 
-namespace Hestia.Base.gRPC.ProtoContracts
+namespace Hestia.Base.Services.ProtoContracts
 {
     /// <summary>
     /// Defines a generic protobuf wrapper for any kind of required message

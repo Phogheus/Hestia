@@ -1,7 +1,7 @@
-using Hestia.Base.gRPC.ProtoContracts;
+using Hestia.Base.Services.ProtoContracts;
 using NUnit.Framework;
 
-namespace Hestia.Base.gRPC.Tests
+namespace Hestia.Base.Tests.ServiceTests
 {
     public class ProtoMessageTests
     {
