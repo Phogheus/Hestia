@@ -116,9 +116,9 @@ namespace Hestia.Base.Geometry.Models
         /// Returns true if this and a given point are approximately equal
         /// </summary>
         /// <param name="other">Other point</param>
-        /// <param name="approximationThreshold">Approximation threshold (default 0)</param>
+        /// <param name="approximationThreshold">Approximation threshold</param>
         /// <returns>True if points are approximately equal</returns>
-        public bool ApproximatelyEquals(Point2D other, double approximationThreshold = 0d)
+        public bool ApproximatelyEquals(Point2D other, double approximationThreshold)
         {
             approximationThreshold = Math.Max(0, approximationThreshold);
 
@@ -152,7 +152,15 @@ namespace Hestia.Base.Geometry.Models
         /// <returns>Hash code</returns>
         public override int GetHashCode()
         {
-            return HashCode.Combine(X, Y);
+            return X.GetHashCode() ^ Y.GetHashCode();
+        }
+
+        /// <summary>
+        /// Returns a string representation of this object
+        /// </summary>
+        public override string ToString()
+        {
+            return $"({X}, {Y})";
         }
 
         /// <summary>

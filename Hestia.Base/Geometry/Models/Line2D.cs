@@ -77,34 +77,13 @@ namespace Hestia.Base.Geometry.Models
         [JsonConstructor]
         public Line2D(Point2D start, Point2D end)
         {
-            // In regards to X-Right and Y-Up, ensure Start is the left-most point first, followed by the bottom-most point,
-            // such that the line "points" Up and/or Right
-
             if (start.Distance(end) == 0)
             {
                 throw new InvalidOperationException(LINE_ZERO_LENGTH_EXCEPTION);
             }
 
-            if (start.X < end.X)
-            {
-                Start = start;
-                End = end;
-            }
-            else if (start.X > end.X)
-            {
-                Start = end;
-                End = start;
-            }
-            else if (start.Y < end.Y)
-            {
-                Start = start;
-                End = end;
-            }
-            else
-            {
-                Start = end;
-                End = start;
-            }
+            Start = start;
+            End = end;
 
             // Create bounds
             var xMin = Math.Min(Start.X, End.X);
@@ -392,7 +371,18 @@ namespace Hestia.Base.Geometry.Models
         /// <returns>Hash code</returns>
         public override int GetHashCode()
         {
-            return HashCode.Combine(Start, End);
+            return Start.X.GetHashCode() ^
+                   Start.Y.GetHashCode() ^
+                   End.X.GetHashCode() ^
+                   End.Y.GetHashCode();
+        }
+
+        /// <summary>
+        /// Returns a string representation of this object
+        /// </summary>
+        public override string ToString()
+        {
+            return $"({Start}, {End})";
         }
 
         /// <summary>
