@@ -12,7 +12,7 @@ namespace Hestia.Base.Tests.GeometryTests
         public void GetBoundsFromPointsTests()
         {
             // Test 3+ points
-            var points = Enumerable.Range(0, Random.Shared.Next(3, 10)).Select(x => GeometryTestHelpers.GetRandomIntegerPoint()).ToArray();
+            var points = Enumerable.Range(0, Random.Shared.Next(3, 10)).Select(x => GeometryTestHelpers.GetRandomIntegerPoint2D()).ToArray();
             var bounds = GeometryUtilities.GetBoundsFromPoints(points);
 
             var expectedMinX = points.Min(x => x.X);
@@ -29,7 +29,7 @@ namespace Hestia.Base.Tests.GeometryTests
             });
 
             // Test 2 points
-            points = Enumerable.Range(0, 2).Select(x => GeometryTestHelpers.GetRandomIntegerPoint()).ToArray();
+            points = Enumerable.Range(0, 2).Select(x => GeometryTestHelpers.GetRandomIntegerPoint2D()).ToArray();
             bounds = GeometryUtilities.GetBoundsFromPoints(points);
 
             expectedMinX = points.Min(x => x.X);
@@ -46,7 +46,7 @@ namespace Hestia.Base.Tests.GeometryTests
             });
 
             // Test 1 point
-            points = Enumerable.Range(0, 1).Select(x => GeometryTestHelpers.GetRandomIntegerPoint()).ToArray();
+            points = Enumerable.Range(0, 1).Select(x => GeometryTestHelpers.GetRandomIntegerPoint2D()).ToArray();
             bounds = GeometryUtilities.GetBoundsFromPoints(points);
 
             expectedMinX = points.Min(x => x.X);
