@@ -4,16 +4,11 @@ using System.Text.Json.Serialization;
 namespace Hestia.Base.Geometry.Models
 {
     /// <summary>
-    /// Defines a two-dimensional point
+    /// Defines a three-dimensional point
     /// </summary>
-    public readonly struct Point2D : IEquatable<Point2D>
+    public readonly struct Point3D : IEquatable<Point3D>
     {
         #region Properties
-
-        /// <summary>
-        /// Returns a point at origin (0, 0)
-        /// </summary>
-        public static Point2D Zero { get; } = new Point2D();
 
         /// <summary>
         /// X position
@@ -26,33 +21,33 @@ namespace Hestia.Base.Geometry.Models
         public double Y { get; }
 
         /// <summary>
+        /// Z position
+        /// </summary>
+        public double Z { get; }
+
+        /// <summary>
         /// Magnitude
         /// </summary>
         [JsonIgnore]
         public double Magnitude { get; }
-
-        /// <summary>
-        /// Magnitude squared
-        /// </summary>
-        [JsonIgnore]
-        public double MagnitudeSquared { get; }
 
         #endregion Properties
 
         #region Constructors
 
         /// <summary>
-        /// Constructor taking x and y position
+        /// Constructor taking x, y, and z position
         /// </summary>
         /// <param name="x">X position</param>
         /// <param name="y">Y position</param>
+        /// <param name="z">Z position</param>
         [JsonConstructor]
-        public Point2D(double x, double y)
+        public Point3D(double x, double y, double z)
         {
             X = x;
             Y = y;
-            MagnitudeSquared = (X * X) + (Y * Y);
-            Magnitude = Math.Sqrt(MagnitudeSquared);
+            Z = z;
+            Magnitude = Math.Sqrt((X * X) + (Y * Y) + (Z * Z));
         }
 
         #endregion Constructors
@@ -64,9 +59,9 @@ namespace Hestia.Base.Geometry.Models
         /// </summary>
         /// <param name="point">Other point</param>
         /// <returns>Dot product</returns>
-        public double Dot(Point2D point)
+        public double Dot(Point3D point)
         {
-            return (X * point.X) + (Y * point.Y);
+            return (X * point.X) + (Y * point.Y) + (Z * point.Z);
         }
 
         /// <summary>
@@ -74,10 +69,17 @@ namespace Hestia.Base.Geometry.Models
         /// </summary>
         /// <param name="point">Other point</param>
         /// <returns>Cross product</returns>
-        public double Cross(Point2D point)
+        public Point3D Cross(Point3D point)
         {
-            // The Cross Product for a vector in 2 dimensions is a scalar
-            return (X * point.Y) - (Y * point.X);
+            // cX = ay * bz - az * by
+            // cY = az * bx - ax * bz
+            // cZ = ax * by - ay * bx
+
+            var crossX = (Y * point.Z) - (Z * point.Y);
+            var crossY = (Z * point.X) - (X * point.Z);
+            var crossZ = (X * point.Y) - (Y * point.X);
+
+            return new Point3D(crossX, crossY, crossZ);
         }
 
         /// <summary>
@@ -85,7 +87,7 @@ namespace Hestia.Base.Geometry.Models
         /// </summary>
         /// <param name="point">Other point</param>
         /// <returns>Distance</returns>
-        public double Distance(Point2D point)
+        public double Distance(Point3D point)
         {
             return Math.Sqrt(DistanceSquared(point));
         }
@@ -95,35 +97,13 @@ namespace Hestia.Base.Geometry.Models
         /// </summary>
         /// <param name="point">Other point</param>
         /// <returns>Distance squared</returns>
-        public double DistanceSquared(Point2D point)
+        public double DistanceSquared(Point3D point)
         {
             var deltaX = point.X - X;
             var deltaY = point.Y - Y;
+            var deltaZ = point.Z - Z;
 
-            return (deltaX * deltaX) + (deltaY * deltaY);
-        }
-
-        /// <summary>
-        /// Returns this point as a normalized value based on <see cref="Magnitude"/>
-        /// </summary>
-        /// <returns>Normalized point</returns>
-        public Point2D Normalized()
-        {
-            return this * (1d / Magnitude);
-        }
-
-        /// <summary>
-        /// Returns true if this and a given point are approximately equal
-        /// </summary>
-        /// <param name="other">Other point</param>
-        /// <param name="approximationThreshold">Approximation threshold</param>
-        /// <returns>True if points are approximately equal</returns>
-        public bool ApproximatelyEquals(Point2D other, double approximationThreshold)
-        {
-            approximationThreshold = Math.Max(0, approximationThreshold);
-
-            return Math.Abs(X - other.X) <= approximationThreshold &&
-                   Math.Abs(Y - other.Y) <= approximationThreshold;
+            return (deltaX * deltaX) + (deltaY * deltaY) + (deltaZ * deltaZ);
         }
 
         /// <summary>
@@ -131,9 +111,9 @@ namespace Hestia.Base.Geometry.Models
         /// </summary>
         /// <param name="other">Instance to compare</param>
         /// <returns>True if instances are equal</returns>
-        public bool Equals(Point2D other)
+        public bool Equals(Point3D other)
         {
-            return X == other.X && Y == other.Y;
+            return X == other.X && Y == other.Y && Z == other.Z;
         }
 
         /// <summary>
@@ -143,7 +123,7 @@ namespace Hestia.Base.Geometry.Models
         /// <returns>True if instances are equal</returns>
         public override bool Equals(object? obj)
         {
-            return obj is Point2D point && Equals(point);
+            return obj is Point3D point && Equals(point);
         }
 
         /// <summary>
@@ -152,15 +132,7 @@ namespace Hestia.Base.Geometry.Models
         /// <returns>Hash code</returns>
         public override int GetHashCode()
         {
-            return X.GetHashCode() ^ Y.GetHashCode();
-        }
-
-        /// <summary>
-        /// Returns a string representation of this object
-        /// </summary>
-        public override string ToString()
-        {
-            return $"({X}, {Y})";
+            return X.GetHashCode() ^ Y.GetHashCode() ^ Z.GetHashCode();
         }
 
         /// <summary>
@@ -169,7 +141,7 @@ namespace Hestia.Base.Geometry.Models
         /// <param name="left">Left value</param>
         /// <param name="right">Right value</param>
         /// <returns>True if the two given values equate</returns>
-        public static bool operator ==(Point2D left, Point2D right)
+        public static bool operator ==(Point3D left, Point3D right)
         {
             return left.Equals(right);
         }
@@ -180,7 +152,7 @@ namespace Hestia.Base.Geometry.Models
         /// <param name="left">Left value</param>
         /// <param name="right">Right value</param>
         /// <returns>True if the two given values do not equate</returns>
-        public static bool operator !=(Point2D left, Point2D right)
+        public static bool operator !=(Point3D left, Point3D right)
         {
             return !(left == right);
         }
@@ -191,9 +163,9 @@ namespace Hestia.Base.Geometry.Models
         /// <param name="left">Left value</param>
         /// <param name="right">Right value</param>
         /// <returns>Result of addition</returns>
-        public static Point2D operator +(Point2D left, Point2D right)
+        public static Point3D operator +(Point3D left, Point3D right)
         {
-            return new Point2D(left.X + right.X, left.Y + right.Y);
+            return new Point3D(left.X + right.X, left.Y + right.Y, left.Z + right.Z);
         }
 
         /// <summary>
@@ -202,9 +174,9 @@ namespace Hestia.Base.Geometry.Models
         /// <param name="left">Left value</param>
         /// <param name="right">Right value</param>
         /// <returns>Result of subtraction</returns>
-        public static Point2D operator -(Point2D left, Point2D right)
+        public static Point3D operator -(Point3D left, Point3D right)
         {
-            return new Point2D(left.X - right.X, left.Y - right.Y);
+            return new Point3D(left.X - right.X, left.Y - right.Y, left.Z - right.Z);
         }
 
         /// <summary>
@@ -213,9 +185,9 @@ namespace Hestia.Base.Geometry.Models
         /// <param name="point">Left value</param>
         /// <param name="scalar">Scalar</param>
         /// <returns>Result of multiplication</returns>
-        public static Point2D operator *(Point2D point, double scalar)
+        public static Point3D operator *(Point3D point, double scalar)
         {
-            return new Point2D(point.X * scalar, point.Y * scalar);
+            return new Point3D(point.X * scalar, point.Y * scalar, point.Z * scalar);
         }
 
         #endregion Public Methods

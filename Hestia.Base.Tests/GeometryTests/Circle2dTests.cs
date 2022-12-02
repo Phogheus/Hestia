@@ -81,7 +81,7 @@ namespace Hestia.Base.Tests.GeometryTests
 
             for (var i = 0; i < 100; i++)
             {
-                var testPoint = GeometryTestHelpers.GetRandomIntegerPoint(-(int)(circle.Radius / 2d), (int)(circle.Radius / 2d));
+                var testPoint = GeometryTestHelpers.GetRandomIntegerPoint2D(-(int)(circle.Radius / 2d), (int)(circle.Radius / 2d));
                 Assert.That(circle.IsPointInCircle(testPoint));
             }
         }

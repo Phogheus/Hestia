@@ -17,63 +17,6 @@ namespace Hestia.Base.Tests.GeometryTests
             Assert.DoesNotThrow(() => new Line2D(Point2D.Zero, new Point2D(0, 1)));
         }
 
-        [TestCase(-1, 1, true)] // Upper left quadrant
-        [TestCase(0, 1, false)] // Upper center
-        [TestCase(1, 1, false)] // Upper right quadrant
-        [TestCase(1, 0, false)] // Center right
-        [TestCase(1, -1, false)] // Bottom right quadrant
-        [TestCase(0, -1, true)] // Bottom center
-        [TestCase(-1, -1, true)] // Bottom left quadrant
-        [TestCase(-1, 0, true)] // Center left
-        public void ConstructorOrderedPointTests(int targetX, int targetY, bool orderFlipExpectedFirst)
-        {
-            // Assert Start and End points are in correct order of X-Right then Y-Up
-
-            // Test upper left quadrant
-            var start = Point2D.Zero;
-            var end = new Point2D(targetX, targetY);
-            var line = new Line2D(start, end);
-
-            if (orderFlipExpectedFirst)
-            {
-                Assert.Multiple(() =>
-                {
-                    Assert.That(line.Start, Is.EqualTo(end));
-                    Assert.That(line.End, Is.EqualTo(start));
-                });
-            }
-            else
-            {
-                Assert.Multiple(() =>
-                {
-                    Assert.That(line.Start, Is.EqualTo(start));
-                    Assert.That(line.End, Is.EqualTo(end));
-                });
-            }
-
-            // Flip points to confirm the opposite order returns the same results
-            start = end;
-            end = Point2D.Zero;
-            line = new Line2D(start, end);
-
-            if (!orderFlipExpectedFirst)
-            {
-                Assert.Multiple(() =>
-                {
-                    Assert.That(line.Start, Is.EqualTo(end));
-                    Assert.That(line.End, Is.EqualTo(start));
-                });
-            }
-            else
-            {
-                Assert.Multiple(() =>
-                {
-                    Assert.That(line.Start, Is.EqualTo(start));
-                    Assert.That(line.End, Is.EqualTo(end));
-                });
-            }
-        }
-
         [Test]
         public void EqualityTests()
         {
