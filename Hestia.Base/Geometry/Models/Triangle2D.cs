@@ -3,53 +3,73 @@ using System.Linq;
 using System.Text.Json.Serialization;
 using Hestia.Base.Geometry.Enums;
 using Hestia.Base.Geometry.Utilities;
-using Hestia.Base.Utilities;
 
 namespace Hestia.Base.Geometry.Models
 {
     /// <summary>
     /// Defines a two-dimensional triangle in 2D space
     /// </summary>
-    public readonly struct Triangle2D : IEquatable<Triangle2D>
+    public sealed class Triangle2D : IEquatable<Triangle2D>
     {
         #region Fields
 
-        private const string INVALID_POINT_COUNT_ERROR = "A triangle must have no more and no less than three points.";
-        private const string NON_DISTINCT_POINTS_ERROR = "A triangle must have three distinct points.";
-        private const string CANNOT_BE_COLINEAR_ERROR = "Triangle cannot be made of only colinear points.";
+        private readonly Point2D[] _points;
+
+        private Line2D[]? _edges;
+        private double? _area;
+        private Circle2D? _circumcircle;
+        private Rectangle2D? _bounds;
 
         #endregion Fields
 
         #region Properties
 
         /// <summary>
-        /// Returns the points of the triangle
+        /// Returns the point at index if index is valid
         /// </summary>
-        public Point2D[] Points { get; }
+        /// <param name="index">Index between 0 and 2</param>
+        /// <returns>Point at index or null</returns>
+        public Point2D? this[int index]
+        {
+            get => index >= 0 && index <= 2 ? _points[index] : null;
+            set
+            {
+                if (index >= 0 && index <= 2)
+                {
+                    _points[index] = value ?? Point2D.Zero;
+                    SetDirty();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Returns the underlying points of this triangle
+        /// </summary>
+        public Point2D[] Points => GetPoints();
 
         /// <summary>
         /// Returns the edges of the triangle
         /// </summary>
         [JsonIgnore]
-        public Line2D[] Edges { get; }
+        public Line2D[] Edges => GetEdges();
 
         /// <summary>
         /// Returns the area of the triangle
         /// </summary>
         [JsonIgnore]
-        public double Area { get; }
+        public double Area => GetArea();
 
         /// <summary>
         /// Returns the circumcircle of the triangle
         /// </summary>
         [JsonIgnore]
-        public Circle2D Circumcircle { get; }
+        public Circle2D Circumcircle => GetCircumcircle();
 
         /// <summary>
         /// Returns the bounds of the triangle
         /// </summary>
         [JsonIgnore]
-        public Rectangle2D Bounds { get; }
+        public Rectangle2D Bounds => GetBounds();
 
         #endregion Properties
 
@@ -73,11 +93,7 @@ namespace Hestia.Base.Geometry.Models
         [JsonConstructor]
         public Triangle2D(Point2D[] points)
         {
-            Points = GetOrderedPoints(points);
-            Edges = GetEdgesFromPoints(points);
-            Area = GetAreaFromSides(Edges);
-            Circumcircle = GetCircumcircleFromPoints(points);
-            Bounds = GeometryUtilities.GetBoundsFromPoints(points);
+            _points = ValidateAndOrderPoints(points);
         }
 
         #endregion Constructors
@@ -89,7 +105,7 @@ namespace Hestia.Base.Geometry.Models
         /// </summary>
         /// <param name="point">Point to check</param>
         /// <returns>True if the given point is inside the circumcircle</returns>
-        public bool IsPointInsideCircumcircle(Point2D point)
+        public bool IsPointInsideCircumcircle(Point2D? point)
         {
             return Circumcircle.IsPointInCircle(point);
         }
@@ -99,9 +115,9 @@ namespace Hestia.Base.Geometry.Models
         /// </summary>
         /// <param name="otherTriangle">Triangle to check</param>
         /// <returns>True if this and the given triangle share an edge</returns>
-        public bool SharesEdgeWithTriangle(Triangle2D otherTriangle)
+        public bool SharesEdgeWithTriangle(Triangle2D? otherTriangle)
         {
-            return Edges.Any(x => otherTriangle.Edges.Any(y => x.Equals(y)));
+            return otherTriangle is not null && Edges.Any(x => otherTriangle.Edges.Any(y => x.Equals(y)));
         }
 
         /// <summary>
@@ -109,9 +125,12 @@ namespace Hestia.Base.Geometry.Models
         /// </summary>
         /// <param name="other">Instance to compare</param>
         /// <returns>True if instances are equal</returns>
-        public bool Equals(Triangle2D other)
+        public bool Equals(Triangle2D? other)
         {
-            return CompareUtility.EnumerablesAreEqual(Points, other.Points);
+            return other is not null &&
+                   _points[0] == other[0] &&
+                   _points[1] == other[1] &&
+                   _points[2] == other[2];
         }
 
         /// <summary>
@@ -121,7 +140,7 @@ namespace Hestia.Base.Geometry.Models
         /// <returns>True if instances are equal</returns>
         public override bool Equals(object? obj)
         {
-            return obj is Triangle2D d && Equals(d);
+            return obj is Triangle2D triangle && Equals(triangle);
         }
 
         /// <summary>
@@ -130,7 +149,9 @@ namespace Hestia.Base.Geometry.Models
         /// <returns>Hash code</returns>
         public override int GetHashCode()
         {
-            return Points.GetHashCode() ^ Area.GetHashCode();
+            return _points[0].GetHashCode() ^
+                   _points[1].GetHashCode() ^
+                   _points[2].GetHashCode();
         }
 
         /// <summary>
@@ -139,9 +160,9 @@ namespace Hestia.Base.Geometry.Models
         /// <param name="left">Left value</param>
         /// <param name="right">Right value</param>
         /// <returns>True if the two given values equate</returns>
-        public static bool operator ==(Triangle2D left, Triangle2D right)
+        public static bool operator ==(Triangle2D? left, Triangle2D? right)
         {
-            return left.Equals(right);
+            return (left is null && right is null) || (left?.Equals(right) ?? false);
         }
 
         /// <summary>
@@ -150,7 +171,7 @@ namespace Hestia.Base.Geometry.Models
         /// <param name="left">Left value</param>
         /// <param name="right">Right value</param>
         /// <returns>True if the two given values do not equate</returns>
-        public static bool operator !=(Triangle2D left, Triangle2D right)
+        public static bool operator !=(Triangle2D? left, Triangle2D? right)
         {
             return !(left == right);
         }
@@ -159,69 +180,130 @@ namespace Hestia.Base.Geometry.Models
 
         #region Private Methods
 
-        /// <summary>
-        /// Ensures the points given in the constructor are in clockwise order
-        /// </summary>
-        private static Point2D[] GetOrderedPoints(Point2D[] points)
+        private Point2D[] GetPoints()
         {
-            if ((points?.Length ?? 0) != 3)
+            return new Point2D[]
             {
-                throw new ArgumentOutOfRangeException(nameof(points), INVALID_POINT_COUNT_ERROR);
-            }
-
-            if (points![0] == points[1] || points[0] == points[2])
-            {
-                throw new InvalidOperationException(NON_DISTINCT_POINTS_ERROR);
-            }
-
-            var testLine = new Line2D(points[0], points[1]);
-            var orientation = testLine.GetOrientationOfPoint(points[2]);
-
-            if (orientation == PointOrientationType.Colinear)
-            {
-                throw new InvalidOperationException(CANNOT_BE_COLINEAR_ERROR);
-            }
-
-            // Ensure clockwise orientation
-            return orientation == PointOrientationType.Clockwise
-                ? points
-                : (new Point2D[] { points[0], points[2], points[1] });
-        }
-
-        /// <summary>
-        /// Converts the points given in the constructor to edges
-        /// </summary>
-        private static Line2D[] GetEdgesFromPoints(Point2D[] points)
-        {
-            return new Line2D[]
-            {
-                new Line2D(points[0], points[1]),
-                new Line2D(points[1], points[2]),
-                new Line2D(points[2], points[0])
+                new Point2D(_points[0].X, _points[0].Y),
+                new Point2D(_points[1].X, _points[1].Y),
+                new Point2D(_points[2].X, _points[2].Y)
             };
         }
 
-        /// <summary>
-        /// Returns the area calculation for a triangle with 3 known sides
-        /// </summary>
-        private static double GetAreaFromSides(Line2D[] edges)
+        private Line2D[] GetEdges()
         {
-            // Heron's Formula for area
-            var distA = edges[0].Length;
-            var distB = edges[1].Length;
-            var distC = edges[2].Length;
-            var s = (distA + distB + distC) / 2d;
+            MarkDirtyIfPointsAreDirty();
 
-            return Math.Sqrt(s * (s - distA) * (s - distB) * (s - distC));
+            return _edges ??= new Line2D[]
+            {
+                new Line2D(_points[0], _points[1]),
+                new Line2D(_points[1], _points[2]),
+                new Line2D(_points[2], _points[0])
+            };
+        }
+
+        private double GetArea()
+        {
+            MarkDirtyIfPointsAreDirty();
+
+            if (_area == null)
+            {
+                var edges = Edges;
+
+                // Heron's Formula for area
+                var distA = edges[0].Length;
+                var distB = edges[1].Length;
+                var distC = edges[2].Length;
+                var s = (distA + distB + distC) / 2d;
+
+                _area = Math.Sqrt(s * (s - distA) * (s - distB) * (s - distC));
+            }
+
+            return _area!.Value;
+        }
+
+        private Circle2D GetCircumcircle()
+        {
+            MarkDirtyIfPointsAreDirty();
+
+            if (_circumcircle == null)
+            {
+                var circumcenter = GetCircumcenterPoint(_points, out var radius);
+                _circumcircle = new Circle2D(radius, circumcenter);
+            }
+
+            return _circumcircle!;
+        }
+
+        private Rectangle2D GetBounds()
+        {
+            MarkDirtyIfPointsAreDirty();
+
+            return _bounds ??= GeometryUtilities.GetBoundsFromPoints(_points);
+        }
+
+        private void SetDirty()
+        {
+            _edges = null;
+            _area = null;
+            _circumcircle = null;
+            _bounds = null;
+        }
+
+        private void MarkDirtyIfPointsAreDirty()
+        {
+            if (_points.All(x => x.IsDirty))
+            {
+                // Set ourselves as dirty now that we can acknowledge some underlying points changed
+                SetDirty();
+
+                // Reset dirty status for points
+                for (var i = 0; i < _points.Length; i++)
+                {
+                    _points[i].IsDirty = false;
+                }
+            }
         }
 
         /// <summary>
-        /// Returns the circumcircle of the points given in the constructor 
+        /// Ensures the points given in the constructor are in clockwise order
         /// </summary>
-        private static Circle2D GetCircumcircleFromPoints(Point2D[] points)
+        private static Point2D[] ValidateAndOrderPoints(Point2D?[]? points)
         {
-            var circumcenter = GetCircumcenterPoint(points, out var radius);
-            return new Circle2D(radius, circumcenter);
+            if ((points?.Length ?? 0) != GeometryConstants.MINIMUM_POINT_COUNT_FOR_POLYGON || (points?.Any(x => x == null) ?? true))
+            {
+                throw new ArgumentOutOfRangeException(nameof(points), GeometryConstants.ErrorMessages.INVALID_TRIANGLE_POINTS_ERROR);
+            }
+            else if (points[0]! == points[1]! || points[0]! == points[2]! || points[1]! == points[2]!)
+            {
+                throw new InvalidOperationException(GeometryConstants.ErrorMessages.INVALID_TRIANGLE_POINTS_ERROR);
+            }
+
+            // Get the first point, which is the left most, up most point
+            var firstPoint = points.OrderBy(x => x!.X) // Order by left most X
+                .GroupBy(x => x!.X) // Group by left most X if two points form a vertical line
+                .Select(x => x.OrderByDescending(x => x!.Y).First()) // Order by up most Y
+                .First()!;
+
+            var remainingPoints = points.Where(x => x != firstPoint).ToArray();
+
+            // Ensure points are not all colinear
+            var testLine = new Line2D(firstPoint, remainingPoints[0]!);
+            var orientation = testLine.GetOrientationOfPoint(remainingPoints[1])!;
+
+            if (orientation == PointOrientationType.Colinear)
+            {
+                throw new InvalidOperationException(GeometryConstants.ErrorMessages.TRIANGLE_POINTS_CANNOT_BE_COLINEAR_ERROR);
+            }
+
+            // Get the rest of the points as a clockwise orientation
+
+            var secondPoint = firstPoint.AngleInRadians(remainingPoints[0]) >= firstPoint.AngleInRadians(remainingPoints[1])
+                ? remainingPoints[0]
+                : remainingPoints[1];
+            var thirdPoint = secondPoint == remainingPoints[0] ? remainingPoints[1] : remainingPoints[0];
+
+            return new Point2D[] { firstPoint, secondPoint!, thirdPoint! };
         }
 
         /// <summary>

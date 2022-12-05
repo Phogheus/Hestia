@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Hestia.Base.Geometry.Enums;
 using Hestia.Base.Geometry.Models;
@@ -25,9 +26,19 @@ namespace Hestia.Base.Geometry.Utilities
         public Triangle2D[] DelaunayTriangles { get; private set; } = Array.Empty<Triangle2D>();
 
         /// <summary>
-        /// Voronoi diagram lines
+        /// Returns only distinct edges from <see cref="DelaunayTriangles"/> if only edges are needed
         /// </summary>
-        public Line2D[] VoronoiLines { get; private set; } = Array.Empty<Line2D>();
+        public Line2D[] DelaunayTriangleDistinctEdges { get; private set; } = Array.Empty<Line2D>();
+
+        /// <summary>
+        /// Voronoi diagram polygons
+        /// </summary>
+        public Polygon2D[] VoronoiPolygons { get; private set; } = Array.Empty<Polygon2D>();
+
+        /// <summary>
+        /// Returns only distinct edges from <see cref="VoronoiPolygons"/> if only edges are needed
+        /// </summary>
+        public Line2D[] VoronoiPolygonDistinctEdges { get; private set; } = Array.Empty<Line2D>();
 
         #endregion Properties
 
@@ -69,14 +80,35 @@ namespace Hestia.Base.Geometry.Utilities
         {
             pointCount = Math.Max(0, pointCount);
 
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+
             // Generate random points
             var points = GenerateRandomPoints(pointCount);
 
+            stopwatch.Stop();
+            Console.WriteLine($"Generated {pointCount} points in {stopwatch.ElapsedMilliseconds}ms");
+            stopwatch.Restart();
+
             // Perform Bowyer-Watson; first we do Delaunay triangluation
             DelaunayTriangles = Triangulate(points);
+            stopwatch.Stop();
+            Console.WriteLine($"Performed Delaunay triangluation in {stopwatch.ElapsedMilliseconds}ms");
+
+            // Get distinct edges for better time on operations such as drawing
+            DelaunayTriangleDistinctEdges = DelaunayTriangles.SelectMany(x => x.Edges).Distinct().ToArray();
+            stopwatch.Restart();
 
             // Then we derive the Voronoi pattern
-            VoronoiLines = DeriveVoronoi(DelaunayTriangles);
+            var voronoiLines = DeriveVoronoi(DelaunayTriangles);
+            stopwatch.Stop();
+            Console.WriteLine($"Derived Voronoi pattern in {stopwatch.ElapsedMilliseconds}ms");
+
+            // Get distinct edges for better time on operations such as drawing
+            VoronoiPolygonDistinctEdges = voronoiLines.Distinct().ToArray();
+
+            // TODO: Set these
+            VoronoiPolygons = Array.Empty<Polygon2D>();
         }
 
         #endregion Public Methods
@@ -135,6 +167,8 @@ namespace Hestia.Base.Geometry.Utilities
         private static Line2D[] DeriveVoronoi(Triangle2D[] triangulationResults)
         {
             var voronoiEdges = new List<Line2D>();
+
+            // TODO: if triangles are "aware" of their neighbors, this look up will be much faster
 
             for (var i = 0; i < triangulationResults.Length; i++)
             {

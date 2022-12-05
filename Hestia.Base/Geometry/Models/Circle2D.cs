@@ -6,11 +6,15 @@ namespace Hestia.Base.Geometry.Models
     /// <summary>
     /// Defines a two-dimensional circle that can also exist at a point in 2D space
     /// </summary>
-    public readonly struct Circle2D : IEquatable<Circle2D>
+    public sealed class Circle2D : IEquatable<Circle2D>
     {
         #region Fields
 
-        private const string RADIUS_TOO_SMALL_EXCEPTION = "Radius must be greater than 0.";
+        private double _radius;
+        private double? _diameter;
+        private double? _circumference;
+        private double? _area;
+        private Rectangle2D? _bounds;
 
         #endregion Fields
 
@@ -19,36 +23,45 @@ namespace Hestia.Base.Geometry.Models
         /// <summary>
         /// Radius of the circle
         /// </summary>
-        public double Radius { get; }
+        public double Radius
+        {
+            get => _radius;
+            set
+            {
+                _radius = Math.Max(0, value);
+                _diameter = _circumference = _area = null;
+                _bounds = null;
+            }
+        }
 
         /// <summary>
         /// Center point of the circle
         /// </summary>
-        public Point2D CenterPoint { get; }
+        public Point2D CenterPoint { get; set; }
 
         /// <summary>
         /// Diameter of the circle
         /// </summary>
         [JsonIgnore]
-        public double Diameter { get; }
+        public double Diameter => _diameter ??= Radius * 2d;
 
         /// <summary>
         /// Circumference of the circle
         /// </summary>
         [JsonIgnore]
-        public double Circumference { get; }
+        public double Circumference => _circumference ??= Math.PI * Diameter;
 
         /// <summary>
         /// Area of the circle
         /// </summary>
         [JsonIgnore]
-        public double Area { get; }
+        public double Area => _area ??= Math.PI * (Radius * Radius);
 
         /// <summary>
         /// Rectangular bounds of the circle
         /// </summary>
         [JsonIgnore]
-        public Rectangle2D Bounds { get; }
+        public Rectangle2D Bounds => _bounds ??= GetBoundsFromCenter(Radius, CenterPoint);
 
         #endregion Properties
 
@@ -58,7 +71,7 @@ namespace Hestia.Base.Geometry.Models
         /// Default constructor, creates a circle with a <see cref="Radius"/> of 1
         /// </summary>
         public Circle2D()
-            : this(1d)
+            : this(0d, null)
         {
         }
 
@@ -68,7 +81,7 @@ namespace Hestia.Base.Geometry.Models
         /// <param name="radius">Radius of the circle</param>
         /// <exception cref="ArgumentOutOfRangeException">Thrown if radius is &lt;= 0</exception>
         public Circle2D(double radius)
-            : this(radius, Point2D.Zero)
+            : this(radius, null)
         {
         }
 
@@ -79,21 +92,10 @@ namespace Hestia.Base.Geometry.Models
         /// <param name="centerPoint">Center point of the circle</param>
         /// <exception cref="ArgumentOutOfRangeException">Thrown if radius is &lt;= 0</exception>
         [JsonConstructor]
-        public Circle2D(double radius, Point2D centerPoint)
+        public Circle2D(double radius, Point2D? centerPoint)
         {
-            if (radius <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(radius), RADIUS_TOO_SMALL_EXCEPTION);
-            }
-
-            Radius = radius;
-            CenterPoint = centerPoint;
-
-            // Derived values
-            Diameter = Radius * 2d;
-            Circumference = Math.PI * Diameter;
-            Area = Math.PI * (Radius * Radius);
-            Bounds = GetBoundsFromCenter(Radius, CenterPoint);
+            Radius = Math.Max(0, radius);
+            CenterPoint = centerPoint ?? Point2D.Zero;
         }
 
         #endregion Constructors
@@ -106,9 +108,9 @@ namespace Hestia.Base.Geometry.Models
         /// </summary>
         /// <param name="point">Point to check</param>
         /// <returns>True if point is considered inside the circle</returns>
-        public bool IsPointInCircle(Point2D point)
+        public bool IsPointInCircle(Point2D? point)
         {
-            return CenterPoint.Distance(point) <= Radius;
+            return point is not null && CenterPoint.Distance(point) <= Radius;
         }
 
         /// <summary>
@@ -116,9 +118,9 @@ namespace Hestia.Base.Geometry.Models
         /// </summary>
         /// <param name="other">Instance to compare</param>
         /// <returns>True if instances are equal</returns>
-        public bool Equals(Circle2D other)
+        public bool Equals(Circle2D? other)
         {
-            return Radius == other.Radius && CenterPoint.Equals(other.CenterPoint);
+            return Radius == other?.Radius && CenterPoint.Equals(other?.CenterPoint);
         }
 
         /// <summary>
@@ -146,9 +148,9 @@ namespace Hestia.Base.Geometry.Models
         /// <param name="left">Left value</param>
         /// <param name="right">Right value</param>
         /// <returns>True if the two given values equate</returns>
-        public static bool operator ==(Circle2D left, Circle2D right)
+        public static bool operator ==(Circle2D? left, Circle2D? right)
         {
-            return left.Equals(right);
+            return (left is null && right is null) || (left?.Equals(right) ?? false);
         }
 
         /// <summary>
@@ -157,7 +159,7 @@ namespace Hestia.Base.Geometry.Models
         /// <param name="left">Left value</param>
         /// <param name="right">Right value</param>
         /// <returns>True if the two given values do not equate</returns>
-        public static bool operator !=(Circle2D left, Circle2D right)
+        public static bool operator !=(Circle2D? left, Circle2D? right)
         {
             return !(left == right);
         }

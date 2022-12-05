@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using Hestia.Base.Geometry.Models;
+using Hestia.Base.Geometry.Utilities;
 
 namespace Hestia.Base.Tests.GeometryTests
 {
@@ -31,6 +33,11 @@ namespace Hestia.Base.Tests.GeometryTests
         public static Rectangle2D GetRandomIntegerRectangle()
         {
             return new Rectangle2D(GetRandomIntegerPoint2D(), GetRandomIntegerPoint2D());
+        }
+
+        public static Triangle2D GetRandomTriangle2D()
+        {
+            return new Triangle2D(GetRandomIntegerPoint2D(), GetRandomIntegerPoint2D(), GetRandomIntegerPoint2D());
         }
     }
 }

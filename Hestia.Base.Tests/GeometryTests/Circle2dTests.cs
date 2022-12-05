@@ -11,10 +11,12 @@ namespace Hestia.Base.Tests.GeometryTests
         [Test]
         public void ConstructorTests()
         {
-            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new Circle2D(-double.Epsilon));
-            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new Circle2D(0));
             Assert.DoesNotThrow(() => new Circle2D());
-            Assert.DoesNotThrow(() => new Circle2D(Random.Shared.NextDouble() + double.Epsilon));
+            Assert.DoesNotThrow(() => new Circle2D(-1));
+            Assert.That(new Circle2D(-1d).Radius, Is.EqualTo(0d));
+            Assert.DoesNotThrow(() => new Circle2D(0d));
+            Assert.DoesNotThrow(() => new Circle2D(1d));
+            Assert.DoesNotThrow(() => new Circle2D(Random.Shared.NextDouble(), GeometryTestHelpers.GetRandomIntegerPoint2D()));
         }
 
         [Test]
@@ -84,6 +86,22 @@ namespace Hestia.Base.Tests.GeometryTests
                 var testPoint = GeometryTestHelpers.GetRandomIntegerPoint2D(-(int)(circle.Radius / 2d), (int)(circle.Radius / 2d));
                 Assert.That(circle.IsPointInCircle(testPoint));
             }
+
+            // Null
+            Assert.That(circle.IsPointInCircle(null), Is.False);
+        }
+
+        [Test]
+        public void RadiusChangeTests()
+        {
+            var circle = new Circle2D(1d);
+            Assert.That(circle.Diameter, Is.EqualTo(2d));
+
+            circle.Radius = 2d;
+            Assert.That(circle.Diameter, Is.EqualTo(4d));
+
+            circle.Radius = -2d;
+            Assert.That(circle.Diameter, Is.EqualTo(0d));
         }
     }
 }

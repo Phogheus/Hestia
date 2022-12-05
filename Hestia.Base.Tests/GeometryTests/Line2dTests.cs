@@ -13,8 +13,11 @@ namespace Hestia.Base.Tests.GeometryTests
         public void ConstructorTests()
         {
             Assert.DoesNotThrow(() => new Line2D());
-            _ = Assert.Throws<InvalidOperationException>(() => new Line2D(Point2D.Zero, Point2D.Zero));
-            Assert.DoesNotThrow(() => new Line2D(Point2D.Zero, new Point2D(0, 1)));
+            Assert.DoesNotThrow(() => new Line2D(Point2D.Zero, Point2D.Zero));
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+            _ = Assert.Throws<ArgumentNullException>(() => new Line2D(null, Point2D.Zero));
+            _ = Assert.Throws<ArgumentNullException>(() => new Line2D(Point2D.Zero, null));
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
         }
 
         [Test]
@@ -46,6 +49,7 @@ namespace Hestia.Base.Tests.GeometryTests
 
             Assert.Multiple(() =>
             {
+                Assert.That(line.IsPointOnLine(null), Is.False);
                 Assert.That(line.IsPointOnLine(line.Start));
                 Assert.That(line.IsPointOnLine(line.Start + minorAdjustment), Is.False);
                 Assert.That(line.IsPointOnLine(line.MidPoint));
@@ -66,6 +70,7 @@ namespace Hestia.Base.Tests.GeometryTests
 
             Assert.Multiple(() =>
             {
+                Assert.That(line.IsPointOnLineSegment(null), Is.False);
                 Assert.That(line.IsPointOnLineSegment(line.Start));
                 Assert.That(line.IsPointOnLineSegment(line.Start + minorAdjustment), Is.False);
                 Assert.That(line.IsPointOnLineSegment(line.MidPoint));
@@ -80,53 +85,63 @@ namespace Hestia.Base.Tests.GeometryTests
         [Test]
         public void DoLinesIntersectTests()
         {
+            // Null
+            Assert.That(new Line2D(Point2D.Zero, Point2D.Up).DoLinesIntersect(null), Is.False);
+
             // Parallel
-            var line1 = GeometryTestHelpers.GetRandomIntegerLineSegment();
-            var line2 = new Line2D(line1.Start * 2, line1.End * 2);
+            var line1 = new Line2D(Point2D.Zero, Point2D.Right + Point2D.Up);
+            var line2 = new Line2D(Point2D.Up, Point2D.Right + (Point2D.Up * 2));
             Assert.That(line1.DoLinesIntersect(line2), Is.False);
 
             // Coincident
-            line1 = GeometryTestHelpers.GetRandomIntegerLineSegment();
-            Assert.That(line1.DoLinesIntersect(line1), Is.False);
+            line1 = new Line2D(Point2D.Zero, Point2D.Right + Point2D.Up);
+            line2 = new Line2D(Point2D.Zero, Point2D.Right + Point2D.Up);
+            Assert.That(line1.DoLinesIntersect(line2), Is.False);
 
             // Perpendicular
-            line1 = GeometryTestHelpers.GetRandomIntegerLineSegment();
-            line2 = new Line2D(new Point2D(line1.Start.X, line1.End.Y), new Point2D(line1.End.X, line1.Start.Y));
+            line1 = new Line2D(Point2D.Zero, Point2D.Right + Point2D.Up);
+            line2 = new Line2D(Point2D.Up, Point2D.Right);
             Assert.That(line1.DoLinesIntersect(line2), Is.True);
 
             // Lines intersect but do not touch
-            line1 = GeometryTestHelpers.GetRandomIntegerLineSegment();
-            line2 = new Line2D(line1.Start * 2, (line1.End * 2) + new Point2D(0, 10));
+            line1 = new Line2D(Point2D.Zero, Point2D.Right);
+            line2 = new Line2D(Point2D.Up, Point2D.Right + (Point2D.Up * 2));
             Assert.That(line1.DoLinesIntersect(line2), Is.True);
         }
 
         [Test]
         public void DoLineSegmentsIntersectTests()
         {
+            // Null
+            Assert.That(new Line2D(Point2D.Zero, Point2D.Up).DoLineSegmentsIntersect(null), Is.False);
+
             // Parallel
-            var line1 = GeometryTestHelpers.GetRandomIntegerLineSegment();
-            var line2 = new Line2D(line1.Start * 2, line1.End * 2);
+            var line1 = new Line2D(Point2D.Zero, Point2D.Right + Point2D.Up);
+            var line2 = new Line2D(Point2D.Up, Point2D.Right + (Point2D.Up * 2));
             Assert.That(line1.DoLineSegmentsIntersect(line2), Is.False);
 
             // Coincident
-            line1 = GeometryTestHelpers.GetRandomIntegerLineSegment();
-            Assert.That(line1.DoLineSegmentsIntersect(line1), Is.False);
+            line1 = new Line2D(Point2D.Zero, Point2D.Right + Point2D.Up);
+            line2 = new Line2D(Point2D.Zero, Point2D.Right + Point2D.Up);
+            Assert.That(line1.DoLineSegmentsIntersect(line2), Is.False);
 
             // Perpendicular
-            var bounds = line1.Bounds;
-            line1 = new Line2D(bounds.TopLeft, bounds.BottomRight);
-            line2 = new Line2D(bounds.BottomLeft, bounds.TopRight);
+            line1 = new Line2D(Point2D.Zero, Point2D.Right + Point2D.Up);
+            line2 = new Line2D(Point2D.Up, Point2D.Right);
             Assert.That(line1.DoLineSegmentsIntersect(line2), Is.True);
 
             // Lines intersect but do not touch
-            line1 = GeometryTestHelpers.GetRandomIntegerLineSegment();
-            line2 = new Line2D(line1.Start * 2, (line1.End * 2) + new Point2D(0, 10));
+            line1 = new Line2D(Point2D.Zero, Point2D.Right);
+            line2 = new Line2D(Point2D.Up, Point2D.Right + (Point2D.Up * 2));
             Assert.That(line1.DoLineSegmentsIntersect(line2), Is.False);
         }
 
         [Test]
         public void GetIntersectionPointOfLinesTests()
         {
+            // Null
+            Assert.That(new Line2D(Point2D.Zero, Point2D.Up).GetIntersectionPointOfLines(null), Is.Null);
+
             var line1 = GeometryTestHelpers.GetRandomIntegerLineSegment();
             var line2 = GeometryTestHelpers.GetRandomIntegerLineSegment();
 
@@ -146,6 +161,9 @@ namespace Hestia.Base.Tests.GeometryTests
         [Test]
         public void GetIntersectionPointOfLineSegments()
         {
+            // Null
+            Assert.That(new Line2D(Point2D.Zero, Point2D.Up).GetIntersectionPointOfLineSegments(null), Is.Null);
+
             var line1 = GeometryTestHelpers.GetRandomIntegerLineSegment();
             var line2 = new Line2D(line1.Start, GeometryTestHelpers.GetRandomIntegerLineSegment().End);
             var line3 = new Line2D(line1.MidPoint, GeometryTestHelpers.GetRandomIntegerLineSegment().End);
@@ -157,6 +175,44 @@ namespace Hestia.Base.Tests.GeometryTests
                 Assert.That(line1.GetIntersectionPointOfLineSegments(line2), Is.Not.Null);
                 Assert.That(line1.GetIntersectionPointOfLineSegments(line3), Is.Not.Null);
                 Assert.That(line1.GetIntersectionPointOfLineSegments(line4), Is.Not.Null);
+            });
+        }
+
+        [Test]
+        public void PositionChangeTests()
+        {
+            var line = new Line2D(Point2D.Zero, Point2D.Right);
+            Assert.Multiple(() =>
+            {
+                Assert.That(line.Length, Is.EqualTo(1));
+                Assert.That(line.Bounds.Width, Is.EqualTo(1));
+                Assert.That(line.Bounds.Height, Is.EqualTo(0));
+            });
+
+            line.End.X += 1;
+            Assert.Multiple(() =>
+            {
+                Assert.That(line.Length, Is.EqualTo(2));
+                Assert.That(line.Bounds.Width, Is.EqualTo(2));
+                Assert.That(line.Bounds.Height, Is.EqualTo(0));
+            });
+
+            line.End.Y += 2;
+            Assert.Multiple(() =>
+            {
+                Assert.That(line.Length, Is.EqualTo(Math.Sqrt(8)));
+                Assert.That(line.Bounds.Width, Is.EqualTo(2));
+                Assert.That(line.Bounds.Height, Is.EqualTo(2));
+            });
+
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+            line.End = null;
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
+            Assert.Multiple(() =>
+            {
+                Assert.That(line.Length, Is.EqualTo(0));
+                Assert.That(line.Bounds.Width, Is.EqualTo(0));
+                Assert.That(line.Bounds.Height, Is.EqualTo(0));
             });
         }
     }
