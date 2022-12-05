@@ -18,18 +18,12 @@
             /// <summary>
             /// Error thrown when a polygon is trying to be made with less than three points
             /// </summary>
-            public const string POLYGON_MUST_HAVE_AT_LEAST_THREE_POINTS_ERROR = "A polygon must contain at least three points.";
+            public const string POLYGON_MUST_HAVE_AT_LEAST_THREE_POINTS_ERROR = "Any type of polygon must contain at least three distinct points.";
 
             /// <summary>
-            /// Error thrown when constructing a triangle with more or less than 3 points,
-            /// or when any one point is equal to another defining point
+            /// Error thrown when all three points of a polygon are colinear
             /// </summary>
-            public const string INVALID_TRIANGLE_POINTS_ERROR = "A triangle must be composed of exactly three, non-null, distinct points.";
-
-            /// <summary>
-            /// Error thrown when all three points of a triangle are colinear
-            /// </summary>
-            public const string TRIANGLE_POINTS_CANNOT_BE_COLINEAR_ERROR = "Points of a triangle cannot all be colinear.";
+            public const string POLYGON_POINTS_CANNOT_BE_COLINEAR_ERROR = "Points of any polygon cannot all be colinear.";
         }
     }
 }

@@ -39,5 +39,14 @@ namespace Hestia.Base.Tests.GeometryTests
         {
             return new Triangle2D(GetRandomIntegerPoint2D(), GetRandomIntegerPoint2D(), GetRandomIntegerPoint2D());
         }
+
+        public static Polygon2D GetRandomPolygon2D(int pointCount = 5)
+        {
+            pointCount = Math.Max(pointCount, GeometryConstants.MINIMUM_POINT_COUNT_FOR_POLYGON);
+
+            var points = Enumerable.Range(0, pointCount).Select(x => GetRandomIntegerPoint2D()).ToArray();
+
+            return new Polygon2D(points);
+        }
     }
 }

@@ -8,22 +8,20 @@ using NUnit.Framework;
 
 namespace Hestia.Base.Tests.GeometryTests
 {
-    internal class Triangle2dTests
+    public class Triangle2dTests
     {
         [Test]
         public void ConstructorTests()
         {
-#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
             _ = Assert.Throws<ArgumentOutOfRangeException>(() => new Triangle2D(null, Point2D.Zero, Point2D.Zero));
             _ = Assert.Throws<ArgumentOutOfRangeException>(() => new Triangle2D(Point2D.Zero, null, Point2D.Zero));
             _ = Assert.Throws<ArgumentOutOfRangeException>(() => new Triangle2D(Point2D.Zero, Point2D.Zero, null));
-            _ = Assert.Throws<InvalidOperationException>(() => new Triangle2D(Point2D.Zero, Point2D.Zero, Point2D.Up));
+            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new Triangle2D(Point2D.Zero, Point2D.Zero, Point2D.Up));
             _ = Assert.Throws<ArgumentOutOfRangeException>(() => new Triangle2D(null));
-            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new Triangle2D(new Point2D[] { null, Point2D.Zero, Point2D.Zero }));
-            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new Triangle2D(new Point2D[] { Point2D.Zero, null, Point2D.Zero }));
-            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new Triangle2D(new Point2D[] { Point2D.Zero, Point2D.Zero, null }));
-#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
-            _ = Assert.Throws<InvalidOperationException>(() => new Triangle2D(new Point2D[] { Point2D.Zero, Point2D.Zero, Point2D.Up }));
+            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new Triangle2D(new Point2D?[] { null, Point2D.Zero, Point2D.Zero }));
+            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new Triangle2D(new Point2D?[] { Point2D.Zero, null, Point2D.Zero }));
+            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new Triangle2D(new Point2D?[] { Point2D.Zero, Point2D.Zero, null }));
+            _ = Assert.Throws<ArgumentOutOfRangeException>(() => new Triangle2D(new Point2D[] { Point2D.Zero, Point2D.Zero, Point2D.Up }));
             _ = Assert.Throws<InvalidOperationException>(() => new Triangle2D(new Point2D[] { Point2D.Zero, Point2D.Right, Point2D.Right * 2 }));
             Assert.DoesNotThrow(() => new Triangle2D(Point2D.Zero, Point2D.Up, Point2D.Right));
             Assert.DoesNotThrow(() => new Triangle2D(new Point2D[] { Point2D.Zero, Point2D.Up, Point2D.Right }));
@@ -139,6 +137,14 @@ namespace Hestia.Base.Tests.GeometryTests
             });
 
             triangle[0] = null;
+            Assert.Multiple(() =>
+            {
+                Assert.That(triangle.Bounds.Width, Is.EqualTo(4));
+                Assert.That(triangle.Bounds.Height, Is.EqualTo(10));
+            });
+
+            // Confirm .Points won't change actual points
+            triangle.Points[0] = new Point2D(-200, 200);
             Assert.Multiple(() =>
             {
                 Assert.That(triangle.Bounds.Width, Is.EqualTo(4));
