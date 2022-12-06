@@ -1,7 +1,7 @@
 using Hestia.Base.Services.ProtoContracts;
 using NUnit.Framework;
 
-namespace Hestia.Base.Tests.ServiceTests
+namespace Hestia.Base.Services.Tests
 {
     public class ProtoMessageTests
     {
