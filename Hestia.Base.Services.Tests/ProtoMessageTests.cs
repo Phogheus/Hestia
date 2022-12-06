@@ -17,11 +17,6 @@ namespace Hestia.Base.Tests.ServiceTests
         public void ConstructorTests()
         {
             Assert.DoesNotThrow(() => new ProtoMessage<object?>(null));
-
-#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
-            Assert.DoesNotThrow(() => new ProtoMessage<object>(null));
-#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
-
             Assert.DoesNotThrow(() => new ProtoMessage<TestingEnumType>(TestingEnumType.ValueTwo));
             Assert.DoesNotThrow(() => new ProtoMessage<int>(1));
             Assert.DoesNotThrow(() => new ProtoMessage<string>("Hello World"));
