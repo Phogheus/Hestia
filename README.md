@@ -1,3 +1,5 @@
+![CodeQL](https://github.com/Phogheus/Hestia/actions/workflows/codeql.yml/badge.svg)
+
 # Hestia
 
 > "In Ancient Greek religion and mythology, Hestia is the virgin goddess of the hearth, the right ordering of domesticity,
