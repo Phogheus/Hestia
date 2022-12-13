@@ -122,10 +122,13 @@ namespace Hestia.Base.Geometry.Models
         #region Public Methods
 
         /// <summary>
-        /// todo
+        /// Returns the angle in radians between this and the given line
         /// </summary>
-        /// <param name="other"></param>
-        /// <returns></returns>
+        /// <param name="other">Line to check</param>
+        /// <returns>
+        /// Angle between this and the given line, or 0 if lines are parallel
+        /// or given line is null
+        /// </returns>
         public double AngleBetweenInRadians(Line2D? other)
         {
             if (other == null)
@@ -141,10 +144,13 @@ namespace Hestia.Base.Geometry.Models
         }
 
         /// <summary>
-        /// todo
+        /// Returns the angle in degrees between this and the given line
         /// </summary>
-        /// <param name="other"></param>
-        /// <returns></returns>
+        /// <param name="other">Line to check</param>
+        /// <returns>
+        /// Angle between this and the given line, or 0 if lines are parallel
+        /// or given line is null
+        /// </returns>
         public double AngleBetweenInDegrees(Line2D? other)
         {
             return AngleBetweenInRadians(other) * MathEnhanced.RAD_2_DEG;
