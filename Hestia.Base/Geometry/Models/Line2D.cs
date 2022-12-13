@@ -1,17 +1,25 @@
 ﻿using System;
 using System.Text.Json.Serialization;
 using Hestia.Base.Geometry.Enums;
+using Hestia.Base.Geometry.Utilities;
+using Hestia.Base.Utilities;
 
 namespace Hestia.Base.Geometry.Models
 {
     /// <summary>
     /// Defines a line segment in two-dimensional space 
     /// </summary>
-    public readonly struct Line2D : IEquatable<Line2D>
+    public sealed class Line2D : IEquatable<Line2D>
     {
         #region Fields
 
-        private const string LINE_ZERO_LENGTH_EXCEPTION = "Line cannot have zero length.";
+        private Point2D _start;
+        private Point2D _end;
+        private Rectangle2D? _bounds;
+        private Point2D? _midPoint;
+        private double? _length;
+        private double? _slope;
+        private double? _intercept;
 
         #endregion Fields
 
@@ -20,52 +28,80 @@ namespace Hestia.Base.Geometry.Models
         /// <summary>
         /// Two-dimensional point representing the start of the line
         /// </summary>
-        public Point2D Start { get; init; }
+        public Point2D Start
+        {
+            get => _start;
+            set
+            {
+                if (_start != value)
+                {
+                    _start = value ?? Point2D.Zero;
+                    _start.IsDirty = false;
+
+                    // Set last values so we can determine if we're dirty next time a call to derived values is done
+                    SetDirty();
+                }
+            }
+        }
 
         /// <summary>
         /// Two-dimensional point representing the end of the line
         /// </summary>
-        public Point2D End { get; init; }
+        public Point2D End
+        {
+            get => _end;
+            set
+            {
+                if (_end != value)
+                {
+                    _end = value ?? Point2D.Zero;
+                    _end.IsDirty = false;
+
+                    // Set last values so we can determine if we're dirty next time a call to derived values is done
+                    SetDirty();
+                }
+            }
+        }
 
         /// <summary>
         /// Two-dimensional bounds this line segment fits within
         /// </summary>
         [JsonIgnore]
-        public Rectangle2D Bounds { get; }
+        public Rectangle2D Bounds => GetBounds();
 
         /// <summary>
         /// Two-dimensional point representing the midpoint of this line segment
         /// </summary>
         [JsonIgnore]
-        public Point2D MidPoint { get; }
+        public Point2D MidPoint => GetMidPoint();
 
         /// <summary>
         /// Length of the line segment
         /// </summary>
         [JsonIgnore]
-        public double Length { get; }
+        public double Length => GetLength();
 
         /// <summary>
         /// Slope of the line
         /// </summary>
         [JsonIgnore]
-        public double Slope { get; }
+        public double Slope => GetSlope();
 
         /// <summary>
         /// Y-intercept of the line
         /// </summary>
         [JsonIgnore]
-        public double Intercept { get; }
+        public double Intercept => GetIntercept();
 
         #endregion Properties
 
         #region Constructors
 
         /// <summary>
-        /// Default constructor; creates a line between (0, 0) and (1, 0)
+        /// Default constructor; creates a line of zero length
         /// </summary>
         public Line2D()
-            : this(Point2D.Zero, new Point2D(1, 0))
+            : this(Point2D.Zero, Point2D.Zero)
         {
         }
 
@@ -77,28 +113,8 @@ namespace Hestia.Base.Geometry.Models
         [JsonConstructor]
         public Line2D(Point2D start, Point2D end)
         {
-            if (start.Distance(end) == 0)
-            {
-                throw new InvalidOperationException(LINE_ZERO_LENGTH_EXCEPTION);
-            }
-
-            Start = start;
-            End = end;
-
-            // Create bounds
-            var xMin = Math.Min(Start.X, End.X);
-            var xMax = Math.Max(Start.X, End.X);
-            var yMin = Math.Min(Start.Y, End.Y);
-            var yMax = Math.Max(Start.Y, End.Y);
-            var topLeft = new Point2D(xMin, yMax);
-            var bottomRight = new Point2D(xMax, yMin);
-            Bounds = new Rectangle2D(topLeft, bottomRight);
-
-            // Other derived values
-            MidPoint = new Point2D((Start.X + End.X) / 2f, (Start.Y + End.Y) / 2f);
-            Length = Start.Distance(End);
-            Slope = (End.Y - Start.Y) / (End.X - Start.X);
-            Intercept = Start.Y - (Slope * Start.X);
+            _start = start ?? throw new ArgumentNullException(nameof(start));
+            _end = end ?? throw new ArgumentNullException(nameof(end));
         }
 
         #endregion Constructors
@@ -106,11 +122,46 @@ namespace Hestia.Base.Geometry.Models
         #region Public Methods
 
         /// <summary>
+        /// Returns the angle in radians between this and the given line
+        /// </summary>
+        /// <param name="other">Line to check</param>
+        /// <returns>
+        /// Angle between this and the given line, or 0 if lines are parallel
+        /// or given line is null
+        /// </returns>
+        public double AngleBetweenInRadians(Line2D? other)
+        {
+            if (other == null)
+            {
+                return 0d;
+            }
+
+            var denominator = 1 + (Slope * other.Slope);
+
+            return denominator != 0
+                ? Math.Atan((other.Slope - Slope) / denominator)
+                : 0d;
+        }
+
+        /// <summary>
+        /// Returns the angle in degrees between this and the given line
+        /// </summary>
+        /// <param name="other">Line to check</param>
+        /// <returns>
+        /// Angle between this and the given line, or 0 if lines are parallel
+        /// or given line is null
+        /// </returns>
+        public double AngleBetweenInDegrees(Line2D? other)
+        {
+            return AngleBetweenInRadians(other) * MathEnhanced.RAD_2_DEG;
+        }
+
+        /// <summary>
         /// Returns true if the given point is on this line
         /// </summary>
         /// <param name="point">Point to check</param>
         /// <returns>True if point is on this line</returns>
-        public bool IsPointOnLine(Point2D point)
+        public bool IsPointOnLine(Point2D? point)
         {
             return GetOrientationOfPoint(point) == PointOrientationType.Colinear;
         }
@@ -120,7 +171,7 @@ namespace Hestia.Base.Geometry.Models
         /// </summary>
         /// <param name="point">Point to check</param>
         /// <returns>True if point is on this line segment</returns>
-        public bool IsPointOnLineSegment(Point2D point)
+        public bool IsPointOnLineSegment(Point2D? point)
         {
             return IsPointOnLine(point) && Bounds.IsPointInsideRect(point);
         }
@@ -131,8 +182,13 @@ namespace Hestia.Base.Geometry.Models
         /// <param name="point">Point to return the orientation of</param>
         /// <returns><see cref="PointOrientationType"/></returns>
         /// <seealso href="https://www.geeksforgeeks.org/orientation-3-ordered-points/"/>
-        public PointOrientationType GetOrientationOfPoint(Point2D point)
+        public PointOrientationType? GetOrientationOfPoint(Point2D? point)
         {
+            if (point == null)
+            {
+                return null;
+            }
+
             // To determine if Point C is conlinear with line AB, we compare the slopes of lines AB and CB.
             //  Slope AB = (y2 - y1) / (x2 - x1)
             //  Slope CB = (y3 - y2) / (x3 - x2)
@@ -144,7 +200,7 @@ namespace Hestia.Base.Geometry.Models
             // counter-clockwise when less than 0.
 
             // (y2 - y1) * (x3 - x2) - (y3 - y2) * (x2 - x1)
-            var cross = ((End.Y - Start.Y) * (point.X - End.X)) - ((point.Y - End.Y) * (End.X - Start.X));
+            var cross = ((_end.Y - _start.Y) * (point.X - _end.X)) - ((point.Y - _end.Y) * (_end.X - _start.X));
 
             // As a developer's note, this formula suffers from rounding point errors and can be made more accurate by
             // including a threshold value to match against the cross product. However, valid thresholds scale with the
@@ -162,8 +218,13 @@ namespace Hestia.Base.Geometry.Models
         /// <param name="line">Line to check</param>
         /// <returns>True if lines intersect</returns>
         /// <seealso href="https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection"/>
-        public bool DoLinesIntersect(Line2D line)
+        public bool DoLinesIntersect(Line2D? line)
         {
+            if (line == null)
+            {
+                return false;
+            }
+
             // Using determinants written out as:
             // 
             // x = (x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)
@@ -178,7 +239,7 @@ namespace Hestia.Base.Geometry.Models
             // value is 0, the lines are coincident or parallel.
 
             // (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
-            var denominator = ((Start.X - End.X) * (line.Start.Y - line.End.Y)) - ((Start.Y - End.Y) * (line.Start.X - line.End.X));
+            var denominator = ((_start.X - _end.X) * (line._start.Y - line._end.Y)) - ((_start.Y - _end.Y) * (line._start.X - line._end.X));
 
             return Math.Abs(denominator) != 0d;
         }
@@ -189,8 +250,13 @@ namespace Hestia.Base.Geometry.Models
         /// <param name="line">Line to check</param>
         /// <returns>True if line segments intersect</returns>
         /// <seealso href="https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection"/>
-        public bool DoLineSegmentsIntersect(Line2D line)
+        public bool DoLineSegmentsIntersect(Line2D? line)
         {
+            if (line == null)
+            {
+                return false;
+            }
+
             // Given determinents t and u, line segments intersect when 0 <= t <= 1 or 0 <= u <= 1
             // 
             // t = (x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)
@@ -202,7 +268,7 @@ namespace Hestia.Base.Geometry.Models
             //     (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
 
             // (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
-            var denominator = ((Start.X - End.X) * (line.Start.Y - line.End.Y)) - ((Start.Y - End.Y) * (line.Start.X - line.End.X));
+            var denominator = ((_start.X - _end.X) * (line._start.Y - line._end.Y)) - ((_start.Y - _end.Y) * (line._start.X - line._end.X));
 
             // If denominator is zero then the lines are coincident or parallel
             if (Math.Abs(denominator) == 0d)
@@ -211,7 +277,7 @@ namespace Hestia.Base.Geometry.Models
             }
 
             // (x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)
-            var tNumerator = ((Start.X - line.Start.X) * (line.Start.Y - line.End.Y)) - ((Start.Y - line.Start.Y) * (line.Start.X - line.End.X));
+            var tNumerator = ((_start.X - line._start.X) * (line._start.Y - line._end.Y)) - ((_start.Y - line._start.Y) * (line._start.X - line._end.X));
             var t = tNumerator / denominator;
 
             if (t >= 0d && t <= 1d)
@@ -220,7 +286,7 @@ namespace Hestia.Base.Geometry.Models
             }
 
             // (x1 - x3) * (y1 - y2) - (y1 - y3) * (x1 - x2)
-            var uNumerator = ((Start.X - line.Start.X) * (Start.Y - End.Y)) - ((Start.Y - line.Start.Y) * (Start.X - End.X));
+            var uNumerator = ((_start.X - line._start.X) * (_start.Y - _end.Y)) - ((_start.Y - line._start.Y) * (_start.X - _end.X));
             var u = uNumerator / denominator;
 
             return u >= 0d && u <= 1d;
@@ -232,8 +298,13 @@ namespace Hestia.Base.Geometry.Models
         /// <param name="line">Line to intersect</param>
         /// <returns>Intersection or null if lines are coincident or parallel</returns>
         /// <seealso href="https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection"/>
-        public Point2D? GetIntersectionPointOfLines(Line2D line)
+        public Point2D? GetIntersectionPointOfLines(Line2D? line)
         {
+            if (line == null)
+            {
+                return null;
+            }
+
             // Using determinants written out as:
             // 
             // x = (x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)
@@ -247,10 +318,10 @@ namespace Hestia.Base.Geometry.Models
             // we can determine the position the lines intersect, provided the lines are
             // not coincident or parallel.
 
-            var x1x2Diff = Start.X - End.X;
-            var y3y4Diff = line.Start.Y - line.End.Y;
-            var y1y2Diff = Start.Y - End.Y;
-            var x3x4Diff = line.Start.X - line.End.X;
+            var x1x2Diff = _start.X - _end.X;
+            var y3y4Diff = line._start.Y - line._end.Y;
+            var y1y2Diff = _start.Y - _end.Y;
+            var x3x4Diff = line._start.X - line._end.X;
 
             // (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
             var denominator = (x1x2Diff * y3y4Diff) - (y1y2Diff * x3x4Diff);
@@ -261,8 +332,8 @@ namespace Hestia.Base.Geometry.Models
                 return null;
             }
 
-            var x1y2_y1x2Diff = (Start.X * End.Y) - (Start.Y * End.X);
-            var x3y4_y3x4Diff = (line.Start.X * line.End.Y) - (line.Start.Y * line.End.X);
+            var x1y2_y1x2Diff = (_start.X * _end.Y) - (_start.Y * _end.X);
+            var x3y4_y3x4Diff = (line._start.X * line._end.Y) - (line._start.Y * line._end.X);
 
             // (x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)
             var xNumerator = (x1y2_y1x2Diff * x3x4Diff) - (x1x2Diff * x3y4_y3x4Diff);
@@ -282,8 +353,13 @@ namespace Hestia.Base.Geometry.Models
         /// <param name="line">Line to intersect</param>
         /// <returns>Intersection or null if line segments do not intersect</returns>
         /// <seealso href="https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection"/>
-        public Point2D? GetIntersectionPointOfLineSegments(Line2D line)
+        public Point2D? GetIntersectionPointOfLineSegments(Line2D? line)
         {
+            if (line == null)
+            {
+                return null;
+            }
+
             // Given determinents t and u, line segments intersect when 0 <= t <= 1 or 0 <= u <= 1
             // 
             // t = (x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)
@@ -295,7 +371,7 @@ namespace Hestia.Base.Geometry.Models
             //     (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
 
             // (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
-            var denominator = ((Start.X - End.X) * (line.Start.Y - line.End.Y)) - ((Start.Y - End.Y) * (line.Start.X - line.End.X));
+            var denominator = ((_start.X - _end.X) * (line._start.Y - line._end.Y)) - ((_start.Y - _end.Y) * (line._start.X - line._end.X));
 
             // If denominator is zero then the lines are coincident or parallel
             if (Math.Abs(denominator) == 0d)
@@ -312,31 +388,31 @@ namespace Hestia.Base.Geometry.Models
             //     y = y3 + u(y4 - y3)
 
             // (x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)
-            var tNumerator = ((Start.X - line.Start.X) * (line.Start.Y - line.End.Y)) - ((Start.Y - line.Start.Y) * (line.Start.X - line.End.X));
+            var tNumerator = ((_start.X - line._start.X) * (line._start.Y - line._end.Y)) - ((_start.Y - line._start.Y) * (line._start.X - line._end.X));
             var t = tNumerator / denominator;
 
             if (t >= 0d && t <= 1d)
             {
                 // x1 + t(x2 - x1)
-                var x = Start.X + (t * (End.X - Start.X));
+                var x = _start.X + (t * (_end.X - _start.X));
 
                 // y1 + t(y2 - y1)
-                var y = Start.Y + (t * (End.Y - Start.Y));
+                var y = _start.Y + (t * (_end.Y - _start.Y));
 
                 return new Point2D(x, y);
             }
 
             // (x1 - x3) * (y1 - y2) - (y1 - y3) * (x1 - x2)
-            var uNumerator = ((Start.X - line.Start.X) * (Start.Y - End.Y)) - ((Start.Y - line.Start.Y) * (Start.X - End.X));
+            var uNumerator = ((_start.X - line._start.X) * (_start.Y - _end.Y)) - ((_start.Y - line._start.Y) * (_start.X - _end.X));
             var u = uNumerator / denominator;
 
             if (u >= 0d && u <= 1d)
             {
                 // x3 + u(x4 - x3)
-                var x = line.Start.X + (u * (line.End.X - line.Start.X));
+                var x = line._start.X + (u * (line._end.X - line._start.X));
 
                 // y3 + u(y4 - y3)
-                var y = line.Start.Y + (u * (line.End.Y - line.Start.Y));
+                var y = line._start.Y + (u * (line._end.Y - line._start.Y));
 
                 return new Point2D(x, y);
             }
@@ -349,10 +425,11 @@ namespace Hestia.Base.Geometry.Models
         /// </summary>
         /// <param name="other">Instance to compare</param>
         /// <returns>True if instances are equal</returns>
-        public bool Equals(Line2D other)
+        public bool Equals(Line2D? other)
         {
-            return (Start.Equals(other.Start) && End.Equals(other.End)) ||
-                   (Start.Equals(other.End) && End.Equals(other.Start));
+            return other is not null &&
+                   ((_start.Equals(other._start) && _end.Equals(other._end)) ||
+                    (_start.Equals(other._end) && _end.Equals(other._start)));
         }
 
         /// <summary>
@@ -371,10 +448,10 @@ namespace Hestia.Base.Geometry.Models
         /// <returns>Hash code</returns>
         public override int GetHashCode()
         {
-            return Start.X.GetHashCode() ^
-                   Start.Y.GetHashCode() ^
-                   End.X.GetHashCode() ^
-                   End.Y.GetHashCode();
+            return _start.X.GetHashCode() ^
+                   _start.Y.GetHashCode() ^
+                   _end.X.GetHashCode() ^
+                   _end.Y.GetHashCode();
         }
 
         /// <summary>
@@ -382,7 +459,7 @@ namespace Hestia.Base.Geometry.Models
         /// </summary>
         public override string ToString()
         {
-            return $"({Start}, {End})";
+            return $"({_start}, {_end})";
         }
 
         /// <summary>
@@ -391,9 +468,9 @@ namespace Hestia.Base.Geometry.Models
         /// <param name="left">Left value</param>
         /// <param name="right">Right value</param>
         /// <returns>True if the two given values equate</returns>
-        public static bool operator ==(Line2D left, Line2D right)
+        public static bool operator ==(Line2D? left, Line2D? right)
         {
-            return left.Equals(right);
+            return (left is null && right is null) || (left?.Equals(right) ?? false);
         }
 
         /// <summary>
@@ -402,11 +479,72 @@ namespace Hestia.Base.Geometry.Models
         /// <param name="left">Left value</param>
         /// <param name="right">Right value</param>
         /// <returns>True if the two given values do not equate</returns>
-        public static bool operator !=(Line2D left, Line2D right)
+        public static bool operator !=(Line2D? left, Line2D? right)
         {
             return !(left == right);
         }
 
         #endregion Public Methods
+
+        #region Private Methods
+
+        private Rectangle2D GetBounds()
+        {
+            MarkDirtyIfPointsAreDirty();
+
+            return _bounds ??= GeometryUtilities.GetBoundsFromPoints(new Point2D[] { _start, _end });
+        }
+
+        private Point2D GetMidPoint()
+        {
+            MarkDirtyIfPointsAreDirty();
+
+            return _midPoint ??= new Point2D((_start.X + _end.X) / 2f, (_start.Y + _end.Y) / 2f);
+        }
+
+        private double GetLength()
+        {
+            MarkDirtyIfPointsAreDirty();
+
+            return _length ??= _start.Distance(_end);
+        }
+
+        private double GetSlope()
+        {
+            MarkDirtyIfPointsAreDirty();
+
+            return _slope ??= (_end.Y - _start.Y) / (_end.X - _start.X);
+        }
+
+        private double GetIntercept()
+        {
+            MarkDirtyIfPointsAreDirty();
+
+            return _intercept ??= _start.Y - (Slope * _start.X);
+        }
+
+        private void SetDirty()
+        {
+            _bounds = null;
+            _midPoint = null;
+            _length = null;
+            _slope = null;
+            _intercept = null;
+        }
+
+        private void MarkDirtyIfPointsAreDirty()
+        {
+            if (_start.IsDirty || _end.IsDirty)
+            {
+                // Set ourselves as dirty now that we can acknowledge some underlying points changed
+                SetDirty();
+
+                // Reset dirty status for points
+                _start.IsDirty = false;
+                _end.IsDirty = false;
+            }
+        }
+
+        #endregion Private Methods
     }
 }

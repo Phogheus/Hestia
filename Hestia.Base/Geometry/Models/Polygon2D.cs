@@ -1,15 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Serialization;
 using Hestia.Base.Geometry.Utilities;
+using Hestia.Base.RandomGenerators;
+using Hestia.Base.Utilities;
 
 namespace Hestia.Base.Geometry.Models
 {
     /// <summary>
-    /// Defines a two-dimensional triangle in 2D space
+    /// Defines a two-dimensional polygon without holes
     /// </summary>
-    public sealed class Triangle2D : IEquatable<Triangle2D>
+    public sealed class Polygon2D : IEquatable<Polygon2D>
     {
         #region Fields
 
@@ -17,7 +18,6 @@ namespace Hestia.Base.Geometry.Models
 
         private Line2D[]? _edges;
         private double? _area;
-        private Circle2D? _circumcircle;
         private Point2D? _centroidPoint;
         private Rectangle2D? _bounds;
 
@@ -32,10 +32,10 @@ namespace Hestia.Base.Geometry.Models
         /// <returns>Point at index or null</returns>
         public Point2D? this[int index]
         {
-            get => index >= 0 && index <= 2 ? _points[index] : null;
+            get => index >= 0 && index < _points.Length ? _points[index] : null;
             set
             {
-                if (index >= 0 && index <= 2)
+                if (index >= 0 && index < _points.Length)
                 {
                     _points[index] = value ?? Point2D.Zero;
                     SetDirty();
@@ -44,12 +44,12 @@ namespace Hestia.Base.Geometry.Models
         }
 
         /// <summary>
-        /// Returns the underlying points of this triangle
+        /// Returns all the underlying points of this polygon
         /// </summary>
-        public Point2D[] Points => GetPoints();
+        public Point2D[] Points => ClonePoints();
 
         /// <summary>
-        /// Returns the edges of the triangle
+        /// Returns all edges that create this polygon
         /// </summary>
         [JsonIgnore]
         public Line2D[] Edges => GetEdges();
@@ -61,19 +61,13 @@ namespace Hestia.Base.Geometry.Models
         public double Area => GetArea();
 
         /// <summary>
-        /// Returns the circumcircle of the triangle
-        /// </summary>
-        [JsonIgnore]
-        public Circle2D Circumcircle => GetCircumcircle();
-
-        /// <summary>
         /// Centroid point of all defining points
         /// </summary>
         [JsonIgnore]
         public Point2D CentroidPoint => GetCentroidPoint();
 
         /// <summary>
-        /// Returns the bounds of the triangle
+        /// Returns the bounds this polygon fits within
         /// </summary>
         [JsonIgnore]
         public Rectangle2D Bounds => GetBounds();
@@ -83,22 +77,14 @@ namespace Hestia.Base.Geometry.Models
         #region Constructors
 
         /// <summary>
-        /// Constructor creating a triangle from three points
+        /// Constructor for a polygon taking defining points
         /// </summary>
-        /// <param name="point1">Point 1</param>
-        /// <param name="point2">Point 2</param>
-        /// <param name="point3">Point 3</param>
-        public Triangle2D(Point2D? point1, Point2D? point2, Point2D? point3)
-            : this(new Point2D?[] { point1, point2, point3 })
-        {
-        }
-
-        /// <summary>
-        /// Constructor creating a triangle from points
-        /// </summary>
-        /// <param name="points">Points defining the triangle</param>
+        /// <param name="points">Defining points</param>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// Thrown if <paramref name="points"/> has less than <see cref="GeometryConstants.MINIMUM_POINT_COUNT_FOR_POLYGON"/> points
+        /// </exception>
         [JsonConstructor]
-        public Triangle2D(IEnumerable<Point2D?>? points)
+        public Polygon2D(Point2D?[]? points)
         {
             _points = GeometryUtilities.ValidateAndOrderPointsForPolygon(points);
         }
@@ -108,23 +94,23 @@ namespace Hestia.Base.Geometry.Models
         #region Public Methods
 
         /// <summary>
-        /// Returns true if the given point is inside the circumcircle
+        /// Returns true if the given point is considered inside this polygon
         /// </summary>
         /// <param name="point">Point to check</param>
-        /// <returns>True if the given point is inside the circumcircle</returns>
-        public bool IsPointInsideCircumcircle(Point2D? point)
+        /// <returns>True if polygon contains point</returns>
+        public bool ContainsPoint(Point2D? point)
         {
-            return Circumcircle.IsPointInCircle(point);
+            return point != null && GeometryUtilities.IsPointInPolygon(this, point);
         }
 
         /// <summary>
-        /// Returns true if this and the given triangle share an edge
+        /// Attempts to triangulate this polygon using the given point
         /// </summary>
-        /// <param name="otherTriangle">Triangle to check</param>
-        /// <returns>True if this and the given triangle share an edge</returns>
-        public bool SharesEdgeWithTriangle(Triangle2D? otherTriangle)
+        /// <param name="point">Point to triangulate around</param>
+        /// <returns></returns>
+        public Triangle2D[] TriangulateAtPoint(Point2D? point)
         {
-            return otherTriangle is not null && Edges.Any(x => otherTriangle.Edges.Any(y => x.Equals(y)));
+            return DelaunayVoronoi.TriangulatePolygonAtPoint(this, point);
         }
 
         /// <summary>
@@ -132,12 +118,9 @@ namespace Hestia.Base.Geometry.Models
         /// </summary>
         /// <param name="other">Instance to compare</param>
         /// <returns>True if instances are equal</returns>
-        public bool Equals(Triangle2D? other)
+        public bool Equals(Polygon2D? other)
         {
-            return other is not null &&
-                   _points[0] == other[0] &&
-                   _points[1] == other[1] &&
-                   _points[2] == other[2];
+            return CompareUtility.EnumerablesAreEqual(Points, other?.Points);
         }
 
         /// <summary>
@@ -147,7 +130,7 @@ namespace Hestia.Base.Geometry.Models
         /// <returns>True if instances are equal</returns>
         public override bool Equals(object? obj)
         {
-            return obj is Triangle2D triangle && Equals(triangle);
+            return obj is Polygon2D d && Equals(d);
         }
 
         /// <summary>
@@ -156,9 +139,7 @@ namespace Hestia.Base.Geometry.Models
         /// <returns>Hash code</returns>
         public override int GetHashCode()
         {
-            return _points[0].GetHashCode() ^
-                   _points[1].GetHashCode() ^
-                   _points[2].GetHashCode();
+            return Points.GetHashCode();
         }
 
         /// <summary>
@@ -167,7 +148,7 @@ namespace Hestia.Base.Geometry.Models
         /// <param name="left">Left value</param>
         /// <param name="right">Right value</param>
         /// <returns>True if the two given values equate</returns>
-        public static bool operator ==(Triangle2D? left, Triangle2D? right)
+        public static bool operator ==(Polygon2D? left, Polygon2D? right)
         {
             return (left is null && right is null) || (left?.Equals(right) ?? false);
         }
@@ -178,7 +159,7 @@ namespace Hestia.Base.Geometry.Models
         /// <param name="left">Left value</param>
         /// <param name="right">Right value</param>
         /// <returns>True if the two given values do not equate</returns>
-        public static bool operator !=(Triangle2D? left, Triangle2D? right)
+        public static bool operator !=(Polygon2D? left, Polygon2D? right)
         {
             return !(left == right);
         }
@@ -187,26 +168,18 @@ namespace Hestia.Base.Geometry.Models
 
         #region Private Methods
 
-        private Point2D[] GetPoints()
+        private Point2D[] ClonePoints()
         {
-            return new Point2D[]
-            {
-                new Point2D(_points[0].X, _points[0].Y),
-                new Point2D(_points[1].X, _points[1].Y),
-                new Point2D(_points[2].X, _points[2].Y)
-            };
+            return _points.Select(x => new Point2D(x.X, x.Y)).ToArray();
         }
 
         private Line2D[] GetEdges()
         {
             MarkDirtyIfPointsAreDirty();
 
-            return _edges ??= new Line2D[]
-            {
-                new Line2D(_points[0], _points[1]),
-                new Line2D(_points[1], _points[2]),
-                new Line2D(_points[2], _points[0])
-            };
+            return _edges ??= Enumerable.Range(0, _points.Length)
+                .Select(x => x == _points.Length - 1 ? new Line2D(_points[x], _points[0]) : new Line2D(_points[x], _points[x + 1]))
+                .ToArray();
         }
 
         private double GetArea()
@@ -215,31 +188,25 @@ namespace Hestia.Base.Geometry.Models
 
             if (_area == null)
             {
-                var edges = Edges;
+                // If triangle: Heron's Formula
+                if (_points.Length == GeometryConstants.MINIMUM_POINT_COUNT_FOR_POLYGON)
+                {
+                    var edges = Edges;
+                    var distA = edges[0].Length;
+                    var distB = edges[1].Length;
+                    var distC = edges[2].Length;
+                    var s = (distA + distB + distC) / 2d;
 
-                // Heron's Formula for area
-                var distA = edges[0].Length;
-                var distB = edges[1].Length;
-                var distC = edges[2].Length;
-                var s = (distA + distB + distC) / 2d;
-
-                _area = Math.Sqrt(s * (s - distA) * (s - distB) * (s - distC));
+                    _area = Math.Sqrt(s * (s - distA) * (s - distB) * (s - distC));
+                }
+                // Otherwise: get area of all composite triangles
+                else
+                {
+                    _area = TriangulateAtPoint(_points[0]).Sum(x => x.Area);
+                }
             }
 
             return _area!.Value;
-        }
-
-        private Circle2D GetCircumcircle()
-        {
-            MarkDirtyIfPointsAreDirty();
-
-            if (_circumcircle == null)
-            {
-                var circumcenter = GetCircumcenterPoint(_points, out var radius);
-                _circumcircle = new Circle2D(radius, circumcenter);
-            }
-
-            return _circumcircle!;
         }
 
         private Point2D GetCentroidPoint()
@@ -259,8 +226,6 @@ namespace Hestia.Base.Geometry.Models
         private void SetDirty()
         {
             _edges = null;
-            _area = null;
-            _circumcircle = null;
             _bounds = null;
         }
 
@@ -277,33 +242,6 @@ namespace Hestia.Base.Geometry.Models
                     _points[i].IsDirty = false;
                 }
             }
-        }
-
-        /// <summary>
-        /// Returns the circumcenter point and radius of circumcircle using
-        /// the points given in the constructor
-        /// </summary>
-        private static Point2D GetCircumcenterPoint(Point2D[] points, out double radius)
-        {
-            var A = points[0];
-            var B = points[1];
-            var C = points[2];
-
-            var d = 2d * ((A.X * (B.Y - C.Y)) + (B.X * (C.Y - A.Y)) + (C.X * (A.Y - B.Y)));
-
-            if (d == 0d)
-            {
-                radius = 0d;
-                return new Point2D();
-            }
-
-            var x = ((A.MagnitudeSquared * (B.Y - C.Y)) + (B.MagnitudeSquared * (C.Y - A.Y)) + (C.MagnitudeSquared * (A.Y - B.Y))) / d;
-            var y = ((A.MagnitudeSquared * (C.X - B.X)) + (B.MagnitudeSquared * (A.X - C.X)) + (C.MagnitudeSquared * (B.X - A.X))) / d;
-
-            var circumcenter = new Point2D(x, y);
-            radius = A.Distance(circumcenter);
-
-            return circumcenter;
         }
 
         #endregion Private Methods

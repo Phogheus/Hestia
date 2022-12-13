@@ -4,6 +4,8 @@ using Hestia.Base.Geometry.Models;
 using Hestia.Base.Geometry.Utilities;
 using NUnit.Framework;
 
+// TODO: ValidateAndOrderPointsForPolygon, ArePointsAllColinear, GetCentroidPoint, IsPointInPolygon, RotatePointAroundOrigin
+
 namespace Hestia.Base.Tests.GeometryTests
 {
     public class GeometryUtilityTests
@@ -72,6 +74,32 @@ namespace Hestia.Base.Tests.GeometryTests
                 Assert.That(bounds.Left, Is.EqualTo(0));
                 Assert.That(bounds.Right, Is.EqualTo(0));
             });
+        }
+
+        [Test]
+        public void OrientPointsClockwiseTests()
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(GeometryUtilities.OrientPointsClockwise(null), Has.Length.EqualTo(0));
+                Assert.That(GeometryUtilities.OrientPointsClockwise(new Point2D[] { new Point2D() }), Has.Length.EqualTo(1));
+            });
+
+            // Pyramid up
+            var expected = new Point2D?[] { new Point2D(0, 0), new Point2D(1, 1), new Point2D(2, 0) };
+            var result = GeometryUtilities.OrientPointsClockwise(expected);
+            Assert.That(result, Has.Length.EqualTo(3));
+            Assert.That(result[0] == expected[0] && result[1] == expected[1] && result[2] == expected[2]);
+
+            expected = new Point2D?[] { null, new Point2D(1, 1), new Point2D(2, 0) };
+            result = GeometryUtilities.OrientPointsClockwise(expected);
+            Assert.That(result, Has.Length.EqualTo(2));
+            Assert.That(result[0] == expected[1] && result[1] == expected[2]);
+
+            expected = new Point2D?[] { new Point2D(0, 0), null, new Point2D(2, 0) };
+            result = GeometryUtilities.OrientPointsClockwise(expected);
+            Assert.That(result, Has.Length.EqualTo(2));
+            Assert.That(result[0] == expected[0] && result[1] == expected[2]);
         }
     }
 }
