@@ -6,7 +6,7 @@ using Hestia.Base.Utilities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using DelVoro = Hestia.Base.Geometry.Utilities.DelaunayVoronoi;
+using DelVoro = Hestia.Base.RandomGenerators.DelaunayVoronoi;
 
 namespace Hestia.Application.DelaunayVoronoi
 {

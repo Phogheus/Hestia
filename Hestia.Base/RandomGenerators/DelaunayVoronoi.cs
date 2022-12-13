@@ -5,7 +5,7 @@ using System.Linq;
 using Hestia.Base.Geometry.Enums;
 using Hestia.Base.Geometry.Models;
 
-namespace Hestia.Base.Geometry.Utilities
+namespace Hestia.Base.RandomGenerators
 {
     /// <summary>
     /// Generator class for creating the Delaunay/Voronoi dual graph 

@@ -2,6 +2,7 @@
 using System.Text.Json.Serialization;
 using Hestia.Base.Geometry.Enums;
 using Hestia.Base.Geometry.Utilities;
+using Hestia.Base.Utilities;
 
 namespace Hestia.Base.Geometry.Models
 {
@@ -119,6 +120,35 @@ namespace Hestia.Base.Geometry.Models
         #endregion Constructors
 
         #region Public Methods
+
+        /// <summary>
+        /// todo
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns></returns>
+        public double AngleBetweenInRadians(Line2D? other)
+        {
+            if (other == null)
+            {
+                return 0d;
+            }
+
+            var denominator = 1 + (Slope * other.Slope);
+
+            return denominator != 0
+                ? Math.Atan((other.Slope - Slope) / denominator)
+                : 0d;
+        }
+
+        /// <summary>
+        /// todo
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns></returns>
+        public double AngleBetweenInDegrees(Line2D? other)
+        {
+            return AngleBetweenInRadians(other) * MathEnhanced.RAD_2_DEG;
+        }
 
         /// <summary>
         /// Returns true if the given point is on this line

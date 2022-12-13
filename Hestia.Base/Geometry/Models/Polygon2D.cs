@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Text.Json.Serialization;
 using Hestia.Base.Geometry.Utilities;
+using Hestia.Base.RandomGenerators;
 using Hestia.Base.Utilities;
 
 namespace Hestia.Base.Geometry.Models
