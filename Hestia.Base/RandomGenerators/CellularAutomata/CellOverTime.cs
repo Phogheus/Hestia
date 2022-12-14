@@ -105,10 +105,10 @@ namespace Hestia.Base.RandomGenerators.CellularAutomata
         /// <param name="generation">Requested generation</param>
         /// <remarks>This returns null if the <paramref name="generation"/> is invalid</remarks>
         /// <returns>Heat value or null</returns>
-        public double? GetHeatValueAtGeneration(int generation)
+        public float? GetHeatValueAtGeneration(int generation)
         {
             return generation >= 0 && generation < _historicalRecord.Count
-                ? _historicalRecord.Take(generation + 1).Count(x => x) / (generation + 1d)
+                ? _historicalRecord.Take(generation + 1).Count(x => x) / (generation + 1f)
                 : null;
         }
 

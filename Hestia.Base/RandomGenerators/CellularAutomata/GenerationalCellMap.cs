@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Hestia.Base.Utilities;
 
@@ -119,7 +120,7 @@ namespace Hestia.Base.RandomGenerators.CellularAutomata
                 var x = cell.PositionX;
                 var y = cell.PositionY;
 
-                returnMap[x, y] = new CellAtGeneration(generation, cellHadLifeAtTheTime, cellHeatValueAtTheTime, x, y);
+                returnMap[x, y] = new CellAtGeneration(cellHadLifeAtTheTime, cellHeatValueAtTheTime, x, y);
             }
 
             return returnMap;
@@ -136,6 +137,58 @@ namespace Hestia.Base.RandomGenerators.CellularAutomata
             }
 
             LatestGeneration = 0;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="generation"></param>
+        /// <returns></returns>
+        public IEnumerable<bool> EnumerateStateByGeneration(int generation)
+        {
+            // If generation is invalid, return empty
+            if (generation < 0)
+            {
+                yield break;
+            }
+
+            // If requested generation is beyond the current generational
+            // knowledge: simulate to the generation
+            if (generation > LatestGeneration)
+            {
+                SimulateGenerations(generation - LatestGeneration);
+            }
+
+            foreach (var cell in _cellMap)
+            {
+                yield return cell.GetLifeStateAtGeneration(generation)!.Value;
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="generation"></param>
+        /// <returns></returns>
+        public IEnumerable<float> EnumerateHeatValueByGeneration(int generation)
+        {
+            // If generation is invalid, return empty
+            if (generation < 0)
+            {
+                yield break;
+            }
+
+            // If requested generation is beyond the current generational
+            // knowledge: simulate to the generation
+            if (generation > LatestGeneration)
+            {
+                SimulateGenerations(generation - LatestGeneration);
+            }
+
+            foreach (var cell in _cellMap)
+            {
+                yield return cell.GetHeatValueAtGeneration(generation)!.Value;
+            }
         }
 
         #endregion Public Methods
@@ -222,7 +275,7 @@ namespace Hestia.Base.RandomGenerators.CellularAutomata
                 foreach (var cell in _cellMap)
                 {
                     var livingNeighborCount = cell.Neighbors.Count(x => x.GetLifeStateAtGeneration(i) == true);
-                    
+
                     if (cell.GetLifeStateAtGeneration(i) == true)
                     {
                         cell.AddGeneration(RuleSet.NeighborCountCellStaysAlive.Contains(livingNeighborCount));
