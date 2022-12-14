@@ -101,16 +101,16 @@ namespace Hestia.Base.RandomGenerators.CellularAutomata
         #region Public Methods
 
         /// <summary>
-        /// Returns information about the cells at a given generation
+        /// Simulates the cell map to the target generation and returns true when simulation is complete
         /// </summary>
-        /// <param name="generation">Generation to get the map for</param>
-        /// <returns>Cell state at the requested generation</returns>
-        public CellAtGeneration[,] GetCellMapAtGeneration(int generation)
+        /// <param name="generation">Generation to simulate to</param>
+        /// <remarks>This returns false if the given <paramref name="generation"/> is invalid</remarks>
+        public bool SimulateToGeneration(int generation)
         {
             // If generation is invalid, return empty
             if (generation < 0)
             {
-                return new CellAtGeneration[0, 0];
+                return false;
             }
 
             // If requested generation is beyond the current generational
@@ -118,6 +118,23 @@ namespace Hestia.Base.RandomGenerators.CellularAutomata
             if (generation > LatestSimulatedGeneration)
             {
                 SimulateGenerations(generation - LatestSimulatedGeneration);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Returns information about the cells at a given generation
+        /// </summary>
+        /// <param name="generation">Generation to get the map for</param>
+        /// <remarks>If <paramref name="generation"/> is less than zero, this will return empty</remarks>
+        /// <returns>Cell state at the requested generation</returns>
+        public CellAtGeneration[,] GetCellMapAtGeneration(int generation)
+        {
+            // If generation is invalid, return empty
+            if (!SimulateToGeneration(generation))
+            {
+                return new CellAtGeneration[0, 0];
             }
 
             var returnMap = new CellAtGeneration[MapWidth, MapHeight];
@@ -149,54 +166,14 @@ namespace Hestia.Base.RandomGenerators.CellularAutomata
         }
 
         /// <summary>
-        /// 
+        /// Enumerates through all cells
         /// </summary>
-        /// <param name="generation"></param>
-        /// <returns></returns>
-        public IEnumerable<bool> EnumerateStateByGeneration(int generation)
+        /// <returns>Unerlying cells</returns>
+        public IEnumerable<CellOverTime> EnumerateCells()
         {
-            // If generation is invalid, return empty
-            if (generation < 0)
-            {
-                yield break;
-            }
-
-            // If requested generation is beyond the current generational
-            // knowledge: simulate to the generation
-            if (generation > LatestSimulatedGeneration)
-            {
-                SimulateGenerations(generation - LatestSimulatedGeneration);
-            }
-
             foreach (var cell in _cellMap)
             {
-                yield return cell.GetLifeStateAtGeneration(generation)!.Value;
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="generation"></param>
-        /// <returns></returns>
-        public IEnumerable<float> EnumerateHeatValueByGeneration(int generation)
-        {
-            // If generation is invalid, return empty
-            if (generation < 0)
-            {
-                yield break;
-            }
-
-            // If requested generation is beyond the current generational
-            // knowledge: simulate to the generation
-            if (generation > LatestSimulatedGeneration)
-            {
-                SimulateGenerations(generation - LatestSimulatedGeneration);
-            }
-
-            foreach (var cell in _cellMap)
-            {
-                yield return cell.GetHeatValueAtGeneration(generation)!.Value;
+                yield return cell;
             }
         }
 
@@ -330,23 +307,35 @@ namespace Hestia.Base.RandomGenerators.CellularAutomata
 
         private void SimulateGenerations(int generationsToRun)
         {
+            if (generationsToRun <= 0)
+            {
+                return;
+            }
+
             for (var i = LatestSimulatedGeneration; i < LatestSimulatedGeneration + generationsToRun; i++)
             {
                 foreach (var cell in _cellMap)
                 {
                     var livingNeighborCount = cell.Neighbors.Count(x => x.GetLifeStateAtGeneration(i) == true);
+                    var cellContainsLife = cell.GetLifeStateAtGeneration(i) ?? false;
 
-                    if (cell.GetLifeStateAtGeneration(i) == true)
+                    if (cellContainsLife)
                     {
+                        // If the cell is currently alive, it stays alive if the neighbor count
+                        // satisfies the conditions to do so
                         cell.AddGeneration(RuleSet.NeighborCountCellStaysAlive.Contains(livingNeighborCount));
                     }
                     else if (RuleSet.NeighborCountCellIsBorn.Contains(livingNeighborCount))
                     {
+                        // If the cell is not currently alive, a new cell is born if the neighbor
+                        // count satisfies the conditions to do so
                         cell.AddGeneration(true);
                     }
                     else
                     {
-                        cell.AddGeneration(false);
+                        // Cell is not alive, and one cannot be born, add another sad day to the
+                        // historical record :(
+                        cell.AddGeneration(cellContainsLife);
                     }
                 }
             }
