@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 using Hestia.Base.Utilities;
 
 namespace Hestia.Base.RandomGenerators.CellularAutomata
@@ -8,7 +9,7 @@ namespace Hestia.Base.RandomGenerators.CellularAutomata
     /// <summary>
     /// Defines a generational map recording <see cref="CellOverTime"/> states for N number of generations
     /// </summary>
-    public class GenerationalCellMap
+    public sealed class GenerationalCellMap : IEquatable<GenerationalCellMap>
     {
         #region Fields
 
@@ -45,16 +46,31 @@ namespace Hestia.Base.RandomGenerators.CellularAutomata
         /// <summary>
         /// <see cref="PredictableGuid"/> based on the <see cref="Seed"/> of this map
         /// </summary>
+        [JsonIgnore]
         public Guid MapId { get; }
 
         /// <summary>
         /// Latest generation this map has simulated to
         /// </summary>
-        public int LatestGeneration { get; private set; }
+        [JsonIgnore]
+        public int LatestSimulatedGeneration { get; private set; }
 
         #endregion Properties
 
         #region Constructors
+
+        /// <summary>
+        /// Constructor for a rectangular, two-dimensional, cellular automata map
+        /// </summary>
+        /// <param name="ruleSet">Defining ruleset for the map</param>
+        /// <param name="mapWidth">Map width</param>
+        /// <param name="mapHeight">Map height</param>
+        /// <exception cref="ArgumentNullException">Thrown if <paramref name="ruleSet"/> is not set</exception>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown if <paramref name="mapWidth"/> or <paramref name="mapHeight"/> are less than 1</exception>
+        public GenerationalCellMap(RuleSet ruleSet, int mapWidth, int mapHeight)
+            : this(ruleSet, mapWidth, mapHeight, GetRandomSeed())
+        {
+        }
 
         /// <summary>
         /// Constructor for a rectangular, two-dimensional, cellular automata map with optional seed for recreation
@@ -65,21 +81,14 @@ namespace Hestia.Base.RandomGenerators.CellularAutomata
         /// <param name="seed">Optional seed; if not set a random seed will be selected</param>
         /// <exception cref="ArgumentNullException">Thrown if <paramref name="ruleSet"/> is not set</exception>
         /// <exception cref="ArgumentOutOfRangeException">Thrown if <paramref name="mapWidth"/> or <paramref name="mapHeight"/> are less than 1</exception>
-        public GenerationalCellMap(RuleSet ruleSet, int mapWidth, int mapHeight, int? seed = null)
+        [JsonConstructor]
+        public GenerationalCellMap(RuleSet ruleSet, int mapWidth, int mapHeight, int seed)
         {
             RuleSet = ruleSet ?? throw new ArgumentNullException(nameof(ruleSet));
             MapWidth = mapWidth > 0 ? mapWidth : throw new ArgumentOutOfRangeException(nameof(mapWidth), WIDTH_IS_INVALID_ERROR_MESSAGE);
             MapHeight = mapHeight > 0 ? mapHeight : throw new ArgumentOutOfRangeException(nameof(mapHeight), HEIGHT_IS_INVALID_ERROR_MESSAGE);
-
-            if (seed == null)
-            {
-                var randomSeedBytes = new byte[sizeof(int)];
-                Random.Shared.NextBytes(randomSeedBytes);
-                seed = BitConverter.ToInt32(randomSeedBytes);
-            }
-
-            Seed = seed.Value;
-            MapId = PredictableGuid.NewGuid(Seed.ToString());
+            Seed = seed;
+            MapId = PredictableGuid.NewGuid($"{RuleSet.FormattedRuleSet}_{MapWidth}_{MapHeight}_{Seed}");
 
             _randomNumberGenerator = new Random(Seed);
             _cellMap = new CellOverTime[MapWidth, MapHeight];
@@ -106,9 +115,9 @@ namespace Hestia.Base.RandomGenerators.CellularAutomata
 
             // If requested generation is beyond the current generational
             // knowledge: simulate to the generation
-            if (generation > LatestGeneration)
+            if (generation > LatestSimulatedGeneration)
             {
-                SimulateGenerations(generation - LatestGeneration);
+                SimulateGenerations(generation - LatestSimulatedGeneration);
             }
 
             var returnMap = new CellAtGeneration[MapWidth, MapHeight];
@@ -136,7 +145,7 @@ namespace Hestia.Base.RandomGenerators.CellularAutomata
                 cell.ClearHistoricalRecord();
             }
 
-            LatestGeneration = 0;
+            LatestSimulatedGeneration = 0;
         }
 
         /// <summary>
@@ -154,9 +163,9 @@ namespace Hestia.Base.RandomGenerators.CellularAutomata
 
             // If requested generation is beyond the current generational
             // knowledge: simulate to the generation
-            if (generation > LatestGeneration)
+            if (generation > LatestSimulatedGeneration)
             {
-                SimulateGenerations(generation - LatestGeneration);
+                SimulateGenerations(generation - LatestSimulatedGeneration);
             }
 
             foreach (var cell in _cellMap)
@@ -180,15 +189,66 @@ namespace Hestia.Base.RandomGenerators.CellularAutomata
 
             // If requested generation is beyond the current generational
             // knowledge: simulate to the generation
-            if (generation > LatestGeneration)
+            if (generation > LatestSimulatedGeneration)
             {
-                SimulateGenerations(generation - LatestGeneration);
+                SimulateGenerations(generation - LatestSimulatedGeneration);
             }
 
             foreach (var cell in _cellMap)
             {
                 yield return cell.GetHeatValueAtGeneration(generation)!.Value;
             }
+        }
+
+        /// <summary>
+        /// Returns true if this and the given instances are considered equal
+        /// </summary>
+        /// <param name="other">Instance to compare</param>
+        /// <returns>True if instances are equal</returns>
+        public bool Equals(GenerationalCellMap? other)
+        {
+            return MapId == other?.MapId;
+        }
+
+        /// <summary>
+        /// Returns true if this and the given instances are considered equal
+        /// </summary>
+        /// <param name="obj">Instance to compare</param>
+        /// <returns>True if instances are equal</returns>
+        public override bool Equals(object? obj)
+        {
+            return obj is GenerationalCellMap cellMap && Equals(cellMap);
+        }
+
+        /// <summary>
+        /// Returns the hash code for this instance
+        /// </summary>
+        /// <returns>Hash code</returns>
+        public override int GetHashCode()
+        {
+            return (MapHeight * 1123) ^ (MapWidth * 397) ^ Seed;
+        }
+
+        /// <summary>
+        /// Returns true if the two given values equate
+        /// </summary>
+        /// <param name="left">Left value</param>
+        /// <param name="right">Right value</param>
+        /// <returns>True if the two given values equate</returns>
+        public static bool operator ==(GenerationalCellMap? left, GenerationalCellMap? right)
+        {
+            return (left is null && right is null) || (left?.Equals(right) ?? false);
+        }
+
+        /// <summary>
+        /// Returns true if the two given values do not equate
+        /// </summary>
+        /// <param name="left">Left value</param>
+        /// <param name="right">Right value</param>
+        /// <returns>True if the two given values do not equate</returns>
+        public static bool operator !=(GenerationalCellMap? left, GenerationalCellMap? right)
+        {
+            return !(left == right);
         }
 
         #endregion Public Methods
@@ -270,7 +330,7 @@ namespace Hestia.Base.RandomGenerators.CellularAutomata
 
         private void SimulateGenerations(int generationsToRun)
         {
-            for (var i = LatestGeneration; i < LatestGeneration + generationsToRun; i++)
+            for (var i = LatestSimulatedGeneration; i < LatestSimulatedGeneration + generationsToRun; i++)
             {
                 foreach (var cell in _cellMap)
                 {
@@ -291,7 +351,14 @@ namespace Hestia.Base.RandomGenerators.CellularAutomata
                 }
             }
 
-            LatestGeneration += generationsToRun;
+            LatestSimulatedGeneration += generationsToRun;
+        }
+
+        private static int GetRandomSeed()
+        {
+            var randomSeedBytes = new byte[sizeof(int)];
+            Random.Shared.NextBytes(randomSeedBytes);
+            return BitConverter.ToInt32(randomSeedBytes);
         }
 
         #endregion Private Methods
