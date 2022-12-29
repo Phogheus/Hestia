@@ -88,21 +88,21 @@ namespace Hestia.Base.Tests.GeometryTests
         [Test]
         public void EqualityTests()
         {
-            var point1 = GeometryTestHelpers.GetRandomIntegerPoint2D();
-            var point2 = new Point2D(point1.X, point1.Y);
-            var point3 = new Point2D(-point1.X, point1.Y);
+            var triangle1 = GeometryTestHelpers.GetRandomTriangle2D();
+            var triangle2 = new Triangle2D(triangle1.Points);
+            var triangle3 = new Triangle2D(-triangle1.Points[0], -triangle1.Points[2], -triangle1.Points[1]);
 
-            Assert.That(point1, Is.EqualTo(point2));
-            Assert.That(point1, Is.Not.EqualTo(point3));
+            Assert.That(triangle1, Is.EqualTo(triangle2));
+            Assert.That(triangle1, Is.Not.EqualTo(triangle3));
         }
 
         [Test]
         public void SerializationTests()
         {
-            var point = GeometryTestHelpers.GetRandomIntegerPoint2D();
-            var serialized = JsonSerializer.Serialize(point);
-            var deserialized = JsonSerializer.Deserialize<Point2D>(serialized);
-            Assert.That(point, Is.EqualTo(deserialized));
+            var triangle = GeometryTestHelpers.GetRandomTriangle2D();
+            var serialized = JsonSerializer.Serialize(triangle);
+            var deserialized = JsonSerializer.Deserialize<Triangle2D>(serialized);
+            Assert.That(triangle, Is.EqualTo(deserialized));
         }
 
         [Test]

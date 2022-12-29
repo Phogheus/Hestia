@@ -356,6 +356,16 @@ namespace Hestia.Base.Geometry.Models
         }
 
         /// <summary>
+        /// Returns the result of negating the specified point <paramref name="left"/>
+        /// </summary>
+        /// <param name="left">Left value</param>
+        /// <returns>Result of subtraction</returns>
+        public static Point2D operator -(Point2D? left)
+        {
+            return left * -1;
+        }
+
+        /// <summary>
         /// Returns the result of multiplying the given point by a scalar
         /// </summary>
         /// <param name="point">Left value</param>

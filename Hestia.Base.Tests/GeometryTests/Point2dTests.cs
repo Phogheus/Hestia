@@ -32,13 +32,11 @@ namespace Hestia.Base.Tests.GeometryTests
         {
             Assert.DoesNotThrow(() => new Point2D().Dot(null));
 
-            var point1 = GeometryTestHelpers.GetRandomIntegerPoint2D(1, 10);
-            var point2 = GeometryTestHelpers.GetRandomIntegerPoint2D(1, 10);
+            var point1 = GeometryTestHelpers.GetRandomIntegerPoint2D();
+            var point2 = GeometryTestHelpers.GetRandomIntegerPoint2D();
 
             Assert.That(point1.Dot(null), Is.EqualTo(0));
-
-            var dot = point1.Dot(point2);
-            Assert.That(dot, Is.Not.EqualTo(0));
+            Assert.That(point1.Dot(point2), Is.Not.EqualTo(0));
         }
 
         [Test]
@@ -46,13 +44,11 @@ namespace Hestia.Base.Tests.GeometryTests
         {
             Assert.DoesNotThrow(() => new Point2D().Cross(null));
 
-            var point1 = GeometryTestHelpers.GetRandomIntegerPoint2D(1, 3);
-            var point2 = GeometryTestHelpers.GetRandomIntegerPoint2D(25, 50);
+            var point1 = GeometryTestHelpers.GetRandomIntegerPoint2D();
+            var point2 = GeometryTestHelpers.GetRandomIntegerPoint2D();
 
             Assert.That(point1.Cross(null), Is.EqualTo(0));
-
-            var cross = point1.Cross(point2);
-            Assert.That(cross, Is.Not.EqualTo(0));
+            Assert.That(point1.Cross(point2), Is.Not.EqualTo(0));
         }
 
         [Test]

@@ -102,7 +102,7 @@ namespace Hestia.Base.Geometry.Models
         /// </summary>
         /// <param name="points">Points defining the triangle</param>
         [JsonConstructor]
-        public Triangle2D(IEnumerable<Point2D?>? points)
+        public Triangle2D(Point2D?[]? points)
         {
             _points = GeometryUtilities.ValidateAndOrderPointsForPolygon(points);
 
