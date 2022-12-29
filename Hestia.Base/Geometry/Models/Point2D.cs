@@ -11,6 +11,9 @@ namespace Hestia.Base.Geometry.Models
     {
         #region Fields
 
+        internal delegate void OnChange();
+        internal OnChange? _onPointChanged;
+
         private double _x;
         private double _y;
         private double? _mag;
@@ -55,10 +58,9 @@ namespace Hestia.Base.Geometry.Models
             {
                 if (_x != value)
                 {
-                    MarkDirty();
+                    _x = value;
+                    ResetDerivedValues();
                 }
-
-                _x = value;
             }
         }
 
@@ -72,10 +74,9 @@ namespace Hestia.Base.Geometry.Models
             {
                 if (_y != value)
                 {
-                    MarkDirty();
+                    _y = value;
+                    ResetDerivedValues();
                 }
-
-                _y = value;
             }
         }
 
@@ -90,8 +91,6 @@ namespace Hestia.Base.Geometry.Models
         /// </summary>
         [JsonIgnore]
         public double MagnitudeSquared => _magSqrd ??= (_x * _x) + (_y * _y);
-
-        internal bool IsDirty { get; set; }
 
         #endregion Properties
 
@@ -373,10 +372,15 @@ namespace Hestia.Base.Geometry.Models
 
         #region Private Methods
 
-        private void MarkDirty()
+        /// <summary>
+        /// Resetting derived values sets said values to null so that they
+        /// will be (re)calculated on next access. This method is called when
+        /// the underlying values said derived values are based on, are changed.
+        /// </summary>
+        private void ResetDerivedValues()
         {
-            IsDirty = true;
             _mag = _magSqrd = null;
+            _onPointChanged?.Invoke();
         }
 
         #endregion Private Methods

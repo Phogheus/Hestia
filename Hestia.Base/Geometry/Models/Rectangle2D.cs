@@ -36,9 +36,8 @@ namespace Hestia.Base.Geometry.Models
                 if (_topLeft != value)
                 {
                     _topLeft = value ?? Point2D.Zero;
-                    _topLeft.IsDirty = false;
-
-                    SetDirty();
+                    _topLeft._onPointChanged = () => ResetDerivedValues();
+                    ResetDerivedValues();
                 }
             }
         }
@@ -52,14 +51,12 @@ namespace Hestia.Base.Geometry.Models
             get => _topRight ??= new Point2D(BottomRight.X, TopLeft.Y);
             set
             {
-                if (value != null && _topRight != value)
+                if (_topRight != value)
                 {
                     var newValue = value ?? Point2D.Zero;
 
-                    _topLeft = new Point2D(_topLeft.X, newValue.Y);
-                    _bottomRight = new Point2D(newValue.X, _bottomRight.Y);
-
-                    SetDirty();
+                    TopLeft = new Point2D(_topLeft.X, newValue.Y);
+                    BottomRight = new Point2D(newValue.X, _bottomRight.Y);
                 }
             }
         }
@@ -75,9 +72,8 @@ namespace Hestia.Base.Geometry.Models
                 if (_bottomRight != value)
                 {
                     _bottomRight = value ?? Point2D.Zero;
-                    _bottomRight.IsDirty = false;
-
-                    SetDirty();
+                    _bottomRight._onPointChanged = () => ResetDerivedValues();
+                    ResetDerivedValues();
                 }
             }
         }
@@ -91,14 +87,12 @@ namespace Hestia.Base.Geometry.Models
             get => _bottomLeft ??= new Point2D(TopLeft.X, BottomRight.Y);
             set
             {
-                if (value != null && _bottomLeft != value)
+                if (_bottomLeft != value)
                 {
                     var newValue = value ?? Point2D.Zero;
 
-                    _topLeft = new Point2D(newValue.X, _topLeft.Y);
-                    _bottomRight = new Point2D(_bottomRight.X, newValue.Y);
-
-                    SetDirty();
+                    TopLeft = new Point2D(newValue.X, _topLeft.Y);
+                    BottomRight = new Point2D(_bottomRight.X, newValue.Y);
                 }
             }
         }
@@ -107,7 +101,7 @@ namespace Hestia.Base.Geometry.Models
         /// Center point
         /// </summary>
         [JsonIgnore]
-        public Point2D CenterPoint => GetCenterPoint();
+        public Point2D CenterPoint => _centerPoint ??= new Point2D(Left + (Width / 2d), Bottom + (Height / 2d));
 
         /// <summary>
         /// Highest Y value
@@ -137,25 +131,25 @@ namespace Hestia.Base.Geometry.Models
         /// Width of the rectangle
         /// </summary>
         [JsonIgnore]
-        public double Width => GetWidth();
+        public double Width => _width ??= Math.Abs(Right - Left);
 
         /// <summary>
         /// Height of the rectangle
         /// </summary>
         [JsonIgnore]
-        public double Height => GetHeight();
+        public double Height => _height ??= Math.Abs(Top - Bottom);
 
         /// <summary>
         /// Area of the rectangle
         /// </summary>
         [JsonIgnore]
-        public double Area => GetArea();
+        public double Area => _area ??= Width * Height;
 
         /// <summary>
         /// Perimeter of the rectangle
         /// </summary>
         [JsonIgnore]
-        public double Perimeter => GetPerimeter();
+        public double Perimeter => _perimeter ??= 2 * (Width + Height);
 
         #endregion Properties
 
@@ -181,6 +175,9 @@ namespace Hestia.Base.Geometry.Models
             _bottomRight = bottomRight ?? Point2D.Zero;
             _topRight = new Point2D(_bottomRight.X, _topLeft.Y);
             _bottomLeft = new Point2D(_topLeft.X, _bottomRight.Y);
+
+            _topLeft._onPointChanged = () => ResetDerivedValues();
+            _bottomRight._onPointChanged = () => ResetDerivedValues();
         }
 
         #endregion Constructors
@@ -256,42 +253,12 @@ namespace Hestia.Base.Geometry.Models
 
         #region Private Methods
 
-        private Point2D GetCenterPoint()
-        {
-            MarkDirtyIfPointsAreDirty();
-
-            return _centerPoint ??= new Point2D(Left + (Width / 2d), Bottom + (Height / 2d));
-        }
-
-        private double GetWidth()
-        {
-            MarkDirtyIfPointsAreDirty();
-
-            return _width ??= Math.Abs(Right - Left);
-        }
-
-        private double GetHeight()
-        {
-            MarkDirtyIfPointsAreDirty();
-
-            return _height ??= Math.Abs(Top - Bottom);
-        }
-
-        private double GetArea()
-        {
-            MarkDirtyIfPointsAreDirty();
-
-            return _area ??= Width * Height;
-        }
-
-        private double GetPerimeter()
-        {
-            MarkDirtyIfPointsAreDirty();
-
-            return _perimeter ??= 2 * (Width + Height);
-        }
-
-        private void SetDirty()
+        /// <summary>
+        /// Resetting derived values sets said values to null so that they
+        /// will be (re)calculated on next access. This method is called when
+        /// the underlying values said derived values are based on, are changed.
+        /// </summary>
+        private void ResetDerivedValues()
         {
             _topRight = null;
             _bottomLeft = null;
@@ -300,19 +267,6 @@ namespace Hestia.Base.Geometry.Models
             _height = null;
             _area = null;
             _perimeter = null;
-        }
-
-        private void MarkDirtyIfPointsAreDirty()
-        {
-            if (_topLeft.IsDirty || _bottomRight.IsDirty)
-            {
-                // Set ourselves as dirty now that we can acknowledge some underlying points changed
-                SetDirty();
-
-                // Reset dirty status for points
-                _topLeft.IsDirty = false;
-                _bottomRight.IsDirty = false;
-            }
         }
 
         #endregion Private Methods

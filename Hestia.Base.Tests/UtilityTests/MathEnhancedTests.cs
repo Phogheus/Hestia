@@ -144,5 +144,74 @@ namespace Hestia.Base.Tests.UtilityTests
                 }
             }
         }
+
+        [Test]
+        public void WrapTests()
+        {
+            // 0 -> 10
+            Assert.Multiple(() =>
+            {
+                Assert.That(MathEnhanced.Wrap(6, 0, 10), Is.EqualTo(6));
+                Assert.That(MathEnhanced.Wrap(11, 0, 10), Is.EqualTo(0));
+                Assert.That(MathEnhanced.Wrap(15, 0, 10), Is.EqualTo(4));
+                Assert.That(MathEnhanced.Wrap(20, 0, 10), Is.EqualTo(9));
+                Assert.That(MathEnhanced.Wrap(21, 0, 10), Is.EqualTo(10));
+                Assert.That(MathEnhanced.Wrap(31, 0, 10), Is.EqualTo(9));
+                Assert.That(MathEnhanced.Wrap(-1, 0, 10), Is.EqualTo(10));
+                Assert.That(MathEnhanced.Wrap(-13, 0, 10), Is.EqualTo(9));
+            });
+
+            // 1 -> 10
+            Assert.Multiple(() =>
+            {
+                Assert.That(MathEnhanced.Wrap(6, 1, 10), Is.EqualTo(6));
+                Assert.That(MathEnhanced.Wrap(11, 1, 10), Is.EqualTo(1));
+                Assert.That(MathEnhanced.Wrap(15, 1, 10), Is.EqualTo(5));
+                Assert.That(MathEnhanced.Wrap(20, 1, 10), Is.EqualTo(10));
+                Assert.That(MathEnhanced.Wrap(21, 1, 10), Is.EqualTo(1));
+                Assert.That(MathEnhanced.Wrap(31, 1, 10), Is.EqualTo(1));
+                Assert.That(MathEnhanced.Wrap(-1, 1, 10), Is.EqualTo(9));
+                Assert.That(MathEnhanced.Wrap(-13, 1, 10), Is.EqualTo(7));
+            });
+
+            // -10 -> 0
+            Assert.Multiple(() =>
+            {
+                Assert.That(MathEnhanced.Wrap(6, -10, 0), Is.EqualTo(-5));
+                Assert.That(MathEnhanced.Wrap(11, -10, 0), Is.EqualTo(0));
+                Assert.That(MathEnhanced.Wrap(15, -10, 0), Is.EqualTo(-7));
+                Assert.That(MathEnhanced.Wrap(20, -10, 0), Is.EqualTo(-2));
+                Assert.That(MathEnhanced.Wrap(21, -10, 0), Is.EqualTo(-1));
+                Assert.That(MathEnhanced.Wrap(31, -10, 0), Is.EqualTo(-2));
+                Assert.That(MathEnhanced.Wrap(-1, -10, 0), Is.EqualTo(-1));
+                Assert.That(MathEnhanced.Wrap(-13, -10, 0), Is.EqualTo(-2));
+            });
+
+            // -10 -> -1
+            Assert.Multiple(() =>
+            {
+                Assert.That(MathEnhanced.Wrap(6, -10, -1), Is.EqualTo(-4));
+                Assert.That(MathEnhanced.Wrap(11, -10, -1), Is.EqualTo(-9));
+                Assert.That(MathEnhanced.Wrap(15, -10, -1), Is.EqualTo(-5));
+                Assert.That(MathEnhanced.Wrap(20, -10, -1), Is.EqualTo(-10));
+                Assert.That(MathEnhanced.Wrap(21, -10, -1), Is.EqualTo(-9));
+                Assert.That(MathEnhanced.Wrap(31, -10, -1), Is.EqualTo(-9));
+                Assert.That(MathEnhanced.Wrap(-1, -10, -1), Is.EqualTo(-1));
+                Assert.That(MathEnhanced.Wrap(-13, -10, -1), Is.EqualTo(-3));
+            });
+
+            // -10 -> 10
+            Assert.Multiple(() =>
+            {
+                Assert.That(MathEnhanced.Wrap(6, -10, 10), Is.EqualTo(6));
+                Assert.That(MathEnhanced.Wrap(11, -10, 10), Is.EqualTo(-10));
+                Assert.That(MathEnhanced.Wrap(15, -10, 10), Is.EqualTo(-6));
+                Assert.That(MathEnhanced.Wrap(20, -10, 10), Is.EqualTo(-1));
+                Assert.That(MathEnhanced.Wrap(21, -10, 10), Is.EqualTo(0));
+                Assert.That(MathEnhanced.Wrap(31, -10, 10), Is.EqualTo(10));
+                Assert.That(MathEnhanced.Wrap(-1, -10, 10), Is.EqualTo(-1));
+                Assert.That(MathEnhanced.Wrap(-13, -10, 10), Is.EqualTo(8));
+            });
+        }
     }
 }

@@ -37,8 +37,12 @@ namespace Hestia.Base.Geometry.Models
             {
                 if (index >= 0 && index < _points.Length)
                 {
-                    _points[index] = value ?? Point2D.Zero;
-                    SetDirty();
+                    if (_points[index] != value)
+                    {
+                        _points[index] = value ?? Point2D.Zero;
+                        _points[index]._onPointChanged = () => ResetDerivedValues();
+                        ResetDerivedValues();
+                    }
                 }
             }
         }
@@ -52,25 +56,25 @@ namespace Hestia.Base.Geometry.Models
         /// Returns all edges that create this polygon
         /// </summary>
         [JsonIgnore]
-        public Line2D[] Edges => GetEdges();
+        public Line2D[] Edges => _edges ??= GetEdges();
 
         /// <summary>
         /// Returns the area of the triangle
         /// </summary>
         [JsonIgnore]
-        public double Area => GetArea();
+        public double Area => _area ??= GetArea();
 
         /// <summary>
         /// Centroid point of all defining points
         /// </summary>
         [JsonIgnore]
-        public Point2D CentroidPoint => GetCentroidPoint();
+        public Point2D CentroidPoint => _centroidPoint ??= GeometryUtilities.GetCentroidPoint(_points);
 
         /// <summary>
         /// Returns the bounds this polygon fits within
         /// </summary>
         [JsonIgnore]
-        public Rectangle2D Bounds => GetBounds();
+        public Rectangle2D Bounds => _bounds ??= GeometryUtilities.GetBoundsFromPoints(_points);
 
         #endregion Properties
 
@@ -87,6 +91,11 @@ namespace Hestia.Base.Geometry.Models
         public Polygon2D(Point2D?[]? points)
         {
             _points = GeometryUtilities.ValidateAndOrderPointsForPolygon(points);
+
+            foreach (var point in _points)
+            {
+                point._onPointChanged = () => ResetDerivedValues();
+            }
         }
 
         #endregion Constructors
@@ -175,73 +184,42 @@ namespace Hestia.Base.Geometry.Models
 
         private Line2D[] GetEdges()
         {
-            MarkDirtyIfPointsAreDirty();
-
-            return _edges ??= Enumerable.Range(0, _points.Length)
+            return Enumerable.Range(0, _points.Length)
                 .Select(x => x == _points.Length - 1 ? new Line2D(_points[x], _points[0]) : new Line2D(_points[x], _points[x + 1]))
                 .ToArray();
         }
 
         private double GetArea()
         {
-            MarkDirtyIfPointsAreDirty();
-
-            if (_area == null)
+            // If triangle: Heron's Formula
+            if (_points.Length == GeometryConstants.MINIMUM_POINT_COUNT_FOR_POLYGON)
             {
-                // If triangle: Heron's Formula
-                if (_points.Length == GeometryConstants.MINIMUM_POINT_COUNT_FOR_POLYGON)
-                {
-                    var edges = Edges;
-                    var distA = edges[0].Length;
-                    var distB = edges[1].Length;
-                    var distC = edges[2].Length;
-                    var s = (distA + distB + distC) / 2d;
+                var edges = Edges;
+                var distA = edges[0].Length;
+                var distB = edges[1].Length;
+                var distC = edges[2].Length;
+                var s = (distA + distB + distC) / 2d;
 
-                    _area = Math.Sqrt(s * (s - distA) * (s - distB) * (s - distC));
-                }
-                // Otherwise: get area of all composite triangles
-                else
-                {
-                    _area = TriangulateAtPoint(_points[0]).Sum(x => x.Area);
-                }
+                return Math.Sqrt(s * (s - distA) * (s - distB) * (s - distC));
             }
-
-            return _area!.Value;
+            // Otherwise: get area of all composite triangles
+            else
+            {
+                return TriangulateAtPoint(_points[0]).Sum(x => x.Area);
+            }
         }
 
-        private Point2D GetCentroidPoint()
-        {
-            MarkDirtyIfPointsAreDirty();
-
-            return _centroidPoint ??= GeometryUtilities.GetCentroidPoint(_points);
-        }
-
-        private Rectangle2D GetBounds()
-        {
-            MarkDirtyIfPointsAreDirty();
-
-            return _bounds ??= GeometryUtilities.GetBoundsFromPoints(_points);
-        }
-
-        private void SetDirty()
+        /// <summary>
+        /// Resetting derived values sets said values to null so that they
+        /// will be (re)calculated on next access. This method is called when
+        /// the underlying values said derived values are based on, are changed.
+        /// </summary>
+        private void ResetDerivedValues()
         {
             _edges = null;
+            _area = null;
+            _centroidPoint = null;
             _bounds = null;
-        }
-
-        private void MarkDirtyIfPointsAreDirty()
-        {
-            if (_points.Any(x => x.IsDirty))
-            {
-                // Set ourselves as dirty now that we can acknowledge some underlying points changed
-                SetDirty();
-
-                // Reset dirty status for points
-                for (var i = 0; i < _points.Length; i++)
-                {
-                    _points[i].IsDirty = false;
-                }
-            }
         }
 
         #endregion Private Methods

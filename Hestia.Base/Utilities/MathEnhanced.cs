@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Security.Cryptography;
 
-// TODO: Wrap, RandomNext
+// TODO: RandomNext
 
 namespace Hestia.Base.Utilities
 {
@@ -254,6 +254,427 @@ namespace Hestia.Base.Utilities
         }
 
         #endregion Lerp
+
+        #region Wrap
+
+        /// <summary>
+        /// Wraps the given value between a specified inclusive min/max range
+        /// </summary>
+        /// <param name="value">Value to wrap</param>
+        /// <param name="min">Inclusive minimum</param>
+        /// <param name="max">Inclusive maximum</param>
+        /// <returns>Wrapped value</returns>
+        public static byte Wrap(byte value, byte min, byte max)
+        {
+            if (min >= max)
+            {
+                return min;
+            }
+            else if (value >= min && value <= max)
+            {
+                return value;
+            }
+
+            var range = max - min + 1; // +1 for inclusive range
+            int returnValue = value;
+
+            while (returnValue < min || returnValue > max)
+            {
+                if (returnValue > max)
+                {
+                    returnValue -= range;
+                }
+                else
+                {
+                    returnValue += range;
+                }
+            }
+
+            return (byte)returnValue;
+        }
+
+        /// <summary>
+        /// Wraps the given value between a specified inclusive min/max range
+        /// </summary>
+        /// <param name="value">Value to wrap</param>
+        /// <param name="min">Inclusive minimum</param>
+        /// <param name="max">Inclusive maximum</param>
+        /// <returns>Wrapped value</returns>
+        public static sbyte Wrap(sbyte value, sbyte min, sbyte max)
+        {
+            if (min >= max)
+            {
+                return min;
+            }
+            else if (value >= min && value <= max)
+            {
+                return value;
+            }
+
+            var range = max - min + 1; // +1 for inclusive range
+            int returnValue = value;
+
+            while (returnValue < min || returnValue > max)
+            {
+                if (returnValue > max)
+                {
+                    returnValue -= range;
+                }
+                else
+                {
+                    returnValue += range;
+                }
+            }
+
+            return (sbyte)returnValue;
+        }
+
+        /// <summary>
+        /// Wraps the given value between a specified inclusive min/max range
+        /// </summary>
+        /// <param name="value">Value to wrap</param>
+        /// <param name="min">Inclusive minimum</param>
+        /// <param name="max">Inclusive maximum</param>
+        /// <returns>Wrapped value</returns>
+        public static short Wrap(short value, short min, short max)
+        {
+            if (min >= max)
+            {
+                return min;
+            }
+            else if (value >= min && value <= max)
+            {
+                return value;
+            }
+
+            var range = max - min + 1; // +1 for inclusive range
+            int returnValue = value;
+
+            while (returnValue < min || returnValue > max)
+            {
+                if (returnValue > max)
+                {
+                    returnValue -= range;
+                }
+                else
+                {
+                    returnValue += range;
+                }
+            }
+
+            return (short)returnValue;
+        }
+
+        /// <summary>
+        /// Wraps the given value between a specified inclusive min/max range
+        /// </summary>
+        /// <param name="value">Value to wrap</param>
+        /// <param name="min">Inclusive minimum</param>
+        /// <param name="max">Inclusive maximum</param>
+        /// <returns>Wrapped value</returns>
+        public static ushort Wrap(ushort value, ushort min, ushort max)
+        {
+            if (min >= max)
+            {
+                return min;
+            }
+            else if (value >= min && value <= max)
+            {
+                return value;
+            }
+
+            var range = max - min + 1; // +1 for inclusive range
+            int returnValue = value;
+
+            while (returnValue < min || returnValue > max)
+            {
+                if (returnValue > max)
+                {
+                    returnValue -= range;
+                }
+                else
+                {
+                    returnValue += range;
+                }
+            }
+
+            return (ushort)returnValue;
+        }
+
+        /// <summary>
+        /// Wraps the given value between a specified inclusive min/max range
+        /// </summary>
+        /// <param name="value">Value to wrap</param>
+        /// <param name="min">Inclusive minimum</param>
+        /// <param name="max">Inclusive maximum</param>
+        /// <returns>Wrapped value</returns>
+        public static int Wrap(int value, int min, int max)
+        {
+            if (min >= max)
+            {
+                return min;
+            }
+            else if (value >= min && value <= max)
+            {
+                return value;
+            }
+
+            var range = max - min + 1; // +1 for inclusive range
+
+            while (value < min || value > max)
+            {
+                if (value > max)
+                {
+                    value -= range;
+                }
+                else
+                {
+                    value += range;
+                }
+            }
+
+            return value;
+        }
+
+        /// <summary>
+        /// Wraps the given value between a specified inclusive min/max range
+        /// </summary>
+        /// <param name="value">Value to wrap</param>
+        /// <param name="min">Inclusive minimum</param>
+        /// <param name="max">Inclusive maximum</param>
+        /// <returns>Wrapped value</returns>
+        public static uint Wrap(uint value, uint min, uint max)
+        {
+            if (min >= max)
+            {
+                return min;
+            }
+            else if (value >= min && value <= max)
+            {
+                return value;
+            }
+
+            var range = max - min + 1; // +1 for inclusive range
+
+            while (value < min || value > max)
+            {
+                if (value > max)
+                {
+                    value -= range;
+                }
+                else
+                {
+                    value += range;
+                }
+            }
+
+            return value;
+        }
+
+        /// <summary>
+        /// Wraps the given value between a specified inclusive min/max range
+        /// </summary>
+        /// <param name="value">Value to wrap</param>
+        /// <param name="min">Inclusive minimum</param>
+        /// <param name="max">Inclusive maximum</param>
+        /// <returns>Wrapped value</returns>
+        public static long Wrap(long value, long min, long max)
+        {
+            if (min >= max)
+            {
+                return min;
+            }
+            else if (value >= min && value <= max)
+            {
+                return value;
+            }
+
+            var range = max - min + 1; // +1 for inclusive range
+
+            while (value < min || value > max)
+            {
+                if (value > max)
+                {
+                    value -= range;
+                }
+                else
+                {
+                    value += range;
+                }
+            }
+
+            return value;
+        }
+
+        /// <summary>
+        /// Wraps the given value between a specified inclusive min/max range
+        /// </summary>
+        /// <param name="value">Value to wrap</param>
+        /// <param name="min">Inclusive minimum</param>
+        /// <param name="max">Inclusive maximum</param>
+        /// <returns>Wrapped value</returns>
+        public static ulong Wrap(ulong value, ulong min, ulong max)
+        {
+            if (min >= max)
+            {
+                return min;
+            }
+            else if (value >= min && value <= max)
+            {
+                return value;
+            }
+
+            var range = max - min + 1; // +1 for inclusive range
+
+            while (value < min || value > max)
+            {
+                if (value > max)
+                {
+                    value -= range;
+                }
+                else
+                {
+                    value += range;
+                }
+            }
+
+            return value;
+        }
+
+        /// <summary>
+        /// Wraps the given value between a specified inclusive min/max range
+        /// </summary>
+        /// <param name="value">Value to wrap</param>
+        /// <param name="min">Inclusive minimum</param>
+        /// <param name="max">Inclusive maximum</param>
+        /// <returns>Wrapped value</returns>
+        public static float Wrap(float value, float min, float max)
+        {
+            if (min >= max)
+            {
+                return min;
+            }
+            else if (value >= min && value <= max)
+            {
+                return value;
+            }
+
+            var range = max - min + 1; // +1 for inclusive range
+
+            while (value < min || value > max)
+            {
+                if (value > max)
+                {
+                    value -= range;
+                }
+                else
+                {
+                    value += range;
+                }
+            }
+
+            return value;
+        }
+
+        /// <summary>
+        /// Wraps the given value between a specified inclusive min/max range
+        /// </summary>
+        /// <param name="value">Value to wrap</param>
+        /// <param name="min">Inclusive minimum</param>
+        /// <param name="max">Inclusive maximum</param>
+        /// <returns>Wrapped value</returns>
+        public static double Wrap(double value, double min, double max)
+        {
+            if (min >= max)
+            {
+                return min;
+            }
+            else if (value >= min && value <= max)
+            {
+                return value;
+            }
+
+            var range = max - min + 1; // +1 for inclusive range
+
+            while (value < min || value > max)
+            {
+                if (value > max)
+                {
+                    value -= range;
+                }
+                else
+                {
+                    value += range;
+                }
+            }
+
+            return value;
+        }
+
+        /// <summary>
+        /// Wraps the given value between a specified inclusive min/max range
+        /// </summary>
+        /// <param name="value">Value to wrap</param>
+        /// <param name="min">Inclusive minimum</param>
+        /// <param name="max">Inclusive maximum</param>
+        /// <returns>Wrapped value</returns>
+        public static decimal Wrap(decimal value, decimal min, decimal max)
+        {
+            if (min >= max)
+            {
+                return min;
+            }
+            else if (value >= min && value <= max)
+            {
+                return value;
+            }
+
+            var range = max - min + 1; // +1 for inclusive range
+
+            while (value < min || value > max)
+            {
+                if (value > max)
+                {
+                    value -= range;
+                }
+                else
+                {
+                    value += range;
+                }
+            }
+
+            return value;
+        }
+
+        /// <summary>
+        /// Wraps the given value between a specified inclusive min/max range
+        /// </summary>
+        /// <param name="value">Value to wrap</param>
+        /// <param name="min">Inclusive minimum</param>
+        /// <param name="max">Inclusive maximum</param>
+        /// <returns>Wrapped value</returns>
+        public static DateTime Wrap(DateTime value, DateTime min, DateTime max)
+        {
+            var wrappedTicks = Wrap(value.Ticks, min.Ticks, max.Ticks);
+
+            return new DateTime(wrappedTicks);
+        }
+
+        /// <summary>
+        /// Wraps the given value between a specified inclusive min/max range
+        /// </summary>
+        /// <param name="value">Value to wrap</param>
+        /// <param name="min">Inclusive minimum</param>
+        /// <param name="max">Inclusive maximum</param>
+        /// <returns>Wrapped value</returns>
+        public static TimeSpan Wrap(TimeSpan value, TimeSpan min, TimeSpan max)
+        {
+            var wrappedTicks = Wrap(value.Ticks, min.Ticks, max.Ticks);
+
+            return new TimeSpan(wrappedTicks);
+        }
+
+        #endregion Wrap
 
         /// <summary>
         /// Returns a random normalized value between 0.0 and 1.0, or -1.0 and 1.0 if <paramref name="includeNegativeRange"/> is true

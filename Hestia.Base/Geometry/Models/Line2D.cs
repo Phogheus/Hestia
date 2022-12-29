@@ -36,10 +36,8 @@ namespace Hestia.Base.Geometry.Models
                 if (_start != value)
                 {
                     _start = value ?? Point2D.Zero;
-                    _start.IsDirty = false;
-
-                    // Set last values so we can determine if we're dirty next time a call to derived values is done
-                    SetDirty();
+                    _start._onPointChanged = () => ResetDerivedValues();
+                    ResetDerivedValues();
                 }
             }
         }
@@ -55,10 +53,8 @@ namespace Hestia.Base.Geometry.Models
                 if (_end != value)
                 {
                     _end = value ?? Point2D.Zero;
-                    _end.IsDirty = false;
-
-                    // Set last values so we can determine if we're dirty next time a call to derived values is done
-                    SetDirty();
+                    _end._onPointChanged = () => ResetDerivedValues();
+                    ResetDerivedValues();
                 }
             }
         }
@@ -67,31 +63,31 @@ namespace Hestia.Base.Geometry.Models
         /// Two-dimensional bounds this line segment fits within
         /// </summary>
         [JsonIgnore]
-        public Rectangle2D Bounds => GetBounds();
+        public Rectangle2D Bounds => _bounds ??= GeometryUtilities.GetBoundsFromPoints(new Point2D[] { _start, _end });
 
         /// <summary>
         /// Two-dimensional point representing the midpoint of this line segment
         /// </summary>
         [JsonIgnore]
-        public Point2D MidPoint => GetMidPoint();
+        public Point2D MidPoint => _midPoint ??= new Point2D((_start.X + _end.X) / 2f, (_start.Y + _end.Y) / 2f);
 
         /// <summary>
         /// Length of the line segment
         /// </summary>
         [JsonIgnore]
-        public double Length => GetLength();
+        public double Length => _length ??= _start.Distance(_end);
 
         /// <summary>
         /// Slope of the line
         /// </summary>
         [JsonIgnore]
-        public double Slope => GetSlope();
+        public double Slope => _slope ??= (_end.Y - _start.Y) / (_end.X - _start.X);
 
         /// <summary>
         /// Y-intercept of the line
         /// </summary>
         [JsonIgnore]
-        public double Intercept => GetIntercept();
+        public double Intercept => _intercept ??= _start.Y - (Slope * _start.X);
 
         #endregion Properties
 
@@ -115,6 +111,9 @@ namespace Hestia.Base.Geometry.Models
         {
             _start = start ?? throw new ArgumentNullException(nameof(start));
             _end = end ?? throw new ArgumentNullException(nameof(end));
+
+            _start._onPointChanged = () => ResetDerivedValues();
+            _end._onPointChanged = () => ResetDerivedValues();
         }
 
         #endregion Constructors
@@ -488,61 +487,18 @@ namespace Hestia.Base.Geometry.Models
 
         #region Private Methods
 
-        private Rectangle2D GetBounds()
-        {
-            MarkDirtyIfPointsAreDirty();
-
-            return _bounds ??= GeometryUtilities.GetBoundsFromPoints(new Point2D[] { _start, _end });
-        }
-
-        private Point2D GetMidPoint()
-        {
-            MarkDirtyIfPointsAreDirty();
-
-            return _midPoint ??= new Point2D((_start.X + _end.X) / 2f, (_start.Y + _end.Y) / 2f);
-        }
-
-        private double GetLength()
-        {
-            MarkDirtyIfPointsAreDirty();
-
-            return _length ??= _start.Distance(_end);
-        }
-
-        private double GetSlope()
-        {
-            MarkDirtyIfPointsAreDirty();
-
-            return _slope ??= (_end.Y - _start.Y) / (_end.X - _start.X);
-        }
-
-        private double GetIntercept()
-        {
-            MarkDirtyIfPointsAreDirty();
-
-            return _intercept ??= _start.Y - (Slope * _start.X);
-        }
-
-        private void SetDirty()
+        /// <summary>
+        /// Resetting derived values sets said values to null so that they
+        /// will be (re)calculated on next access. This method is called when
+        /// the underlying values said derived values are based on, are changed.
+        /// </summary>
+        private void ResetDerivedValues()
         {
             _bounds = null;
             _midPoint = null;
             _length = null;
             _slope = null;
             _intercept = null;
-        }
-
-        private void MarkDirtyIfPointsAreDirty()
-        {
-            if (_start.IsDirty || _end.IsDirty)
-            {
-                // Set ourselves as dirty now that we can acknowledge some underlying points changed
-                SetDirty();
-
-                // Reset dirty status for points
-                _start.IsDirty = false;
-                _end.IsDirty = false;
-            }
         }
 
         #endregion Private Methods
